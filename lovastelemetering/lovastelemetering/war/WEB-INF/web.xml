@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee 
+              http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	version="2.5" xmlns="http://java.sun.com/xml/ns/javaee">
+
+	<!-- Servlets -->
+	<servlet>
+		<servlet-name>ReceiveMeasurement</servlet-name>
+		<servlet-class>hu.droidium.telemetering.ReceiveMeasurementServlet</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>PostValue</servlet-name>
+		<jsp-file>/jsp/postvalue.jsp</jsp-file>
+	</servlet>
+
+	<!-- Servlet mapping -->
+	<servlet-mapping>
+		<servlet-name>ReceiveMeasurement</servlet-name>
+		<url-pattern>/receivemeasurement</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>PostValue</servlet-name>
+		<url-pattern>/postvalue</url-pattern>
+	</servlet-mapping>
+	<welcome-file-list>
+		<welcome-file>jsp/dataview.jsp</welcome-file>
+	</welcome-file-list>
+</web-app>

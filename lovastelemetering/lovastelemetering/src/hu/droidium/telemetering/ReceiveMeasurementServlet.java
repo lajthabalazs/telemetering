@@ -44,7 +44,7 @@ public class ReceiveMeasurementServlet extends HttpServlet {
 		}
 		
 		// Save data to datastore
-        Key deivceKey = KeyFactory.createKey(Constants.READING_TABLE_NAME, deviceId);
+		Key deivceKey = KeyFactory.createKey(Constants.READING_TABLE_NAME, deviceId);
         Date date = new Date();
         Entity reading = new Entity(Constants.READING_TABLE_NAME, deivceKey);
         reading.setProperty(Constants.DEVICE_ID, deviceId);

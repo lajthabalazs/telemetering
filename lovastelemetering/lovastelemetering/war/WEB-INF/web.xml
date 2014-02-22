@@ -10,6 +10,10 @@
 		<servlet-class>hu.droidium.telemetering.ReceiveMeasurementServlet</servlet-class>
 	</servlet>
 	<servlet>
+		<servlet-name>AddDevice</servlet-name>
+		<servlet-class>hu.droidium.telemetering.AddDeviceServlet</servlet-class>
+	</servlet>
+		<servlet>
 		<servlet-name>PostValue</servlet-name>
 		<jsp-file>/jsp/postvalue.jsp</jsp-file>
 	</servlet>
@@ -20,10 +24,14 @@
 		<url-pattern>/receivemeasurement</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
+		<servlet-name>AddDevice</servlet-name>
+		<url-pattern>/adddevice</url-pattern>
+	</servlet-mapping>
+		<servlet-mapping>
 		<servlet-name>PostValue</servlet-name>
 		<url-pattern>/postvalue</url-pattern>
 	</servlet-mapping>
 	<welcome-file-list>
-		<welcome-file>jsp/dataview.jsp</welcome-file>
+		<welcome-file>jsp/devicelist.jsp</welcome-file>
 	</welcome-file-list>
 </web-app>

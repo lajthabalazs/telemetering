@@ -12,9 +12,10 @@ import java.net.URLEncoder;
 
 public class Main {
 	public static void main(String[] args) {
+		int measurementDelay = Integer.parseInt(args[0]);
 		while (true) {
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(measurementDelay * 1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -70,7 +71,7 @@ public class Main {
 	    // Send POST output.
 	    printout = new DataOutputStream (urlConn.getOutputStream ());
 	    String content =
-	    "deviceid=" + URLEncoder.encode ("default", "UTF-8") +
+	    "deviceid=" + URLEncoder.encode ("28-000004d11070", "UTF-8") +
 	    "&time=" + URLEncoder.encode ("" + System.currentTimeMillis(), "UTF-8") +
 	    "&value=" + URLEncoder.encode (data, "UTF-8");
 	    printout.writeBytes (content);

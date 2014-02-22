@@ -8,7 +8,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.google.api.server.spi.Constant;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
@@ -18,6 +17,7 @@ import com.google.appengine.api.datastore.KeyFactory;
 public class ReceiveMeasurementServlet extends HttpServlet {
 	private static final long serialVersionUID = -7817381622879870467L;
 
+	@SuppressWarnings("unused")
 	private static final Logger log = Logger.getLogger(ReceiveMeasurementServlet.class.getName());
 
 	@Override

@@ -6,5 +6,4 @@
     <datastore-index kind="reading" ancestor="true" source="auto">
         <property name="date" direction="desc"/>
     </datastore-index>
-
 </datastore-indexes>

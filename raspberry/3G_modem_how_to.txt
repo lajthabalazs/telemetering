@@ -1,0 +1,18 @@
+Update:
+
+az újabb firmware-rel ellátott glóbtrottyok nem a szokásos "option" driverrel mennek, hanem a "hso" nevű driverrel, és ezek már nem a /dev/ttyUSB0 eszközön laknak, hanem a /dev/ttyHS0-on, és nem a szokásos "ATDT*99#" paranccsal kell rajtuk betárcsázni, majd pedig ppp-t indítani, mint a régi szép modemes időkben, hanem az alábbi propietary AT parancsokkal (chatscript follows)
+
+"" ATZ
+OK AT+CGDCONT=1,,"apn"
+OK AT_OWANCALL=1,1,1
+_OWANCALL ""
+OK AT_OWANDATA=1
+_OWANDATA ""
+OK
+ekkor az eszköz kifossa magából a kapcsolat IP paramétereit (helyi IP cím, DNS szerverek) amit ezekután fel kell konfigurálni a driver által létrehozott hso0 hálózati interfészre:
+
+ifconfig hso0 <IP cím>
+route add default dev hso0
+echo <nameserver1> > /etc/resolv.conf
+echo <nameserver2> >> /etc/resolv.conf
+A kapcsolat tehát nem igényel pppd-t.

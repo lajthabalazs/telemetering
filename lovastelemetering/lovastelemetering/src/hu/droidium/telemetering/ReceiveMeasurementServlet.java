@@ -30,7 +30,7 @@ public class ReceiveMeasurementServlet extends HttpServlet {
 	@SuppressWarnings("unused")
 	private static final Logger log = Logger.getLogger(ReceiveMeasurementServlet.class.getName());
 
-	private static final long PERSIST_DELTA = 1800;
+	private static final long PERSIST_DELTA = 1800; // Delay between two persistent writes
 
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -39,6 +39,7 @@ public class ReceiveMeasurementServlet extends HttpServlet {
 		String deviceId = req.getParameter(Constants.DEVICE_ID);
 		String time = req.getParameter(Constants.TIME);
 		String value = req.getParameter(Constants.VALUE);
+		long now = System.currentTimeMillis();
 		if (deviceId == null) {
 			resp.setContentType("text/plain");
 			resp.getWriter().println("ERROR");
@@ -68,10 +69,12 @@ public class ReceiveMeasurementServlet extends HttpServlet {
         if (cache != null) {
         	if (cache.containsKey(deviceId)) {
         		CachedSensorData cachedData = (CachedSensorData)cache.get(deviceId);
-        		if (System.currentTimeMillis() - lastPersisted < PERSIST_DELTA) {
-        			cache.put(deviceId + " " +  + LAST_PERSISTED_DATE, );
+        		if (now - cachedData.lastWritten < PERSIST_DELTA) {
         			saveData(deviceId, time, value);
         		}
+        		// Update cached data
+        		cachedData.update(now, value);
+    			cache.put(deviceId, cachedData);
         		Calendar calendar = Calendar.getInstance();
         		int min = calendar.get(Calendar.MINUTE);
         		cache.put(deviceId + " " + min, value);

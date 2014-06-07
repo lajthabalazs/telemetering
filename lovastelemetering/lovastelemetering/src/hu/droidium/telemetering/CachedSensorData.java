@@ -10,4 +10,10 @@ public class CachedSensorData implements Serializable{
 	public String[] hourData = new String[24];
 	
 	public CachedSensorData() {}
+
+	public void update(long date, String value) {
+		long min = (date / 1000 / 60) % 60;
+		long hour = (date / 1000 / 60 / 60) % 24;
+		
+	}
 }

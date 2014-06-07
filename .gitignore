@@ -219,4 +219,4 @@ pip-log.txt
 ## Java
 #############
 
-*.java
+*.class

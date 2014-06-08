@@ -220,3 +220,9 @@ pip-log.txt
 #############
 
 *.class
+
+#############
+## Project
+#############
+
+remote_home_manager/test_datastore.sqlite

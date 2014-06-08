@@ -12,12 +12,28 @@ public class Measurement {
 		this.value = value;
 	}
 
-	public Object getValue() {
+	public long getValue() {
 		return value;
 	}
 
-	public Object getSensorId() {
+	public String getSensorId() {
 		return sensorId;
+	}
+
+	public long getTime() {
+		return time;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Measurement) {
+			Measurement other = (Measurement) obj;
+			if (!other.sensorId.equals(sensorId)) return false;
+			if (other.time != time) return false;
+			if (other.value != value) return false;
+			return true;
+		}
+		return false;
 	}
 
 }

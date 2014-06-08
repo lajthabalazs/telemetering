@@ -7,12 +7,13 @@ public class HungarianLanguageModule implements LanguageInterface {
 
 	private static final String QUESTION = "(mennyi|hány|milyen|mi|mennyire)";
 	private static final String SENSOR_TYPES = "(meleg|hideg|fok|idő|az idő|hőmérséklet|a hőmérséklet|a légnyomás|világos|sötét|a szél|mozgás|a mozgás)";
-	private static final String DATE_PATTERN = "dddd[/\\-\\.]dd[/\\-\\.]dd";
-	private static final String DATE_PATTERNS = "(ma|tegnap|tegnap előtt|a héten|a múlt héten|múlt héten|hétfőn|kedden|szerdán|csütörtökön|pénteken|szombaton|vasárnap|" + DATE_PATTERN + " )";
-	private static final String DATE = DATE_PATTERNS + "(?:\\-[éá]n)*";
+	private static final String DATE_PATTERN = "\\d\\d\\d\\d[/\\-\\.]\\d\\d[/\\-\\.]\\d\\d";
+	private static final String DATE_WITH_SUFFIX = "(ma|tegnap|tegnap előtt|a hét|a múlt hét|múlt hét|hétfő|kedd|szerda?|csütörtök|péntek|szombat|vasárnap|" + DATE_PATTERN + ")";
+	private static final String DATE = DATE_WITH_SUFFIX + "(?:\\-?[eéáöo]?n)*";
 	
 	@Override
 	public String getResponse(String message, SensorInterface sensorDataStore) {
+		System.out.println("Question: " + message);
 		message = message.toLowerCase();
 		Pattern currentPattern = Pattern.compile(QUESTION + "( van | )" + SENSOR_TYPES + "( van |)(.*)\\?");
 		Matcher currentMatcher = currentPattern.matcher(message.toLowerCase());
@@ -20,9 +21,9 @@ public class HungarianLanguageModule implements LanguageInterface {
 			int groups = currentMatcher.groupCount();
 			if (groups == 5) {
 				if (currentMatcher.group(2).equals(" van ") || currentMatcher.group(4).equals(" van ")) {
-					for (int i = 1; i <= groups; i++) {
-						System.out.println(">" + currentMatcher.group(i) + "<");
-					}
+					System.out.println("ACTUAL");
+					System.out.println("Sensor type: " + currentMatcher.group(3));
+					System.out.println("Location: " + currentMatcher.group(5));
 					return null;
 				}
 			}
@@ -31,17 +32,24 @@ public class HungarianLanguageModule implements LanguageInterface {
 		Matcher pastMatcher = pastPattern.matcher(message.toLowerCase());
 		if (pastMatcher.matches()) {
 			int groups = pastMatcher.groupCount();
-			for (int i = 1; i <= groups; i++) {
-				System.out.println(">" + pastMatcher.group(i) + "<");
+			if (groups == 6) {
+				System.out.println("PAST");
+				System.out.println("Sensor type: " + pastMatcher.group(3));
+				System.out.println("Location: " + pastMatcher.group(5));
+				System.out.println("Time: " + pastMatcher.group(6));
+				return null;
 			}
-			return null;
 		}
 		pastPattern = Pattern.compile(QUESTION + "( volt | )" + SENSOR_TYPES + "( volt | )" + DATE + " (.*)\\?");
 		pastMatcher = pastPattern.matcher(message.toLowerCase());
 		if (pastMatcher.matches()) {
 			int groups = pastMatcher.groupCount();
-			for (int i = 1; i <= groups; i++) {
-				System.out.println(">" + pastMatcher.group(i) + "<");
+			if (groups == 6) {
+				System.out.println("PAST");
+				System.out.println("Sensor type: " + pastMatcher.group(3));
+				System.out.println("Location: " + pastMatcher.group(6));
+				System.out.println("Time: " + pastMatcher.group(5));
+				return null;
 			}
 			return null;
 		}
@@ -60,5 +68,15 @@ public class HungarianLanguageModule implements LanguageInterface {
 		new HungarianLanguageModule().getResponse("Mennyire volt meleg tegnap a nappaliban?", null);
 		System.out.println();
 		new HungarianLanguageModule().getResponse("Milyen volt az idő tegnap a nappaliban?", null);
+		System.out.println();
+		new HungarianLanguageModule().getResponse("Mennyire volt hideg 2012.12.24-én a nappaliban?", null);
+		System.out.println();
+		new HungarianLanguageModule().getResponse("Mennyire volt hideg 2012/12/24-án a nappaliban?", null);
+		System.out.println();
+		new HungarianLanguageModule().getResponse("Mennyire volt hideg tegnap a nappaliban?", null);
+		System.out.println();
+		new HungarianLanguageModule().getResponse("Mennyire volt hideg szerdán a nappaliban?", null);
+		System.out.println();
+		new HungarianLanguageModule().getResponse("Mennyire volt hideg múlt héten a nappaliban?", null);
 	}
 }

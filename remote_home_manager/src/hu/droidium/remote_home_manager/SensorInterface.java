@@ -4,31 +4,33 @@ import java.util.List;
 
 public interface SensorInterface {
 	
-	public boolean saveMeasurement(String sensorId, long time, long value);
+	public String[] getLocations();
+	
+	public boolean saveMeasurement(String location, SensorType type, long time, long value);
 	public boolean bulkInster(List<Measurement> measurements);
 	
-	public Measurement getLastMeasurement(String sensorId);
-	public List<Measurement> getLastHoursMeasurements(String sensorId);
-	public List<Measurement> getMeasurements(String sensorId, long startTime, long endTime);
+	public Measurement getLastMeasurement(String location, SensorType type);
+	public List<Measurement> getLastHoursMeasurements(String location, SensorType type);
+	public List<Measurement> getMeasurements(String location, SensorType type, long startTime, long endTime);
 	
-	public Measurement getLastHoursAverage(String sensorId);
-	public Measurement getLastDaysAverage(String sensorId);
-	public Measurement getLastWeeksAverage(String sensorId);
-	public Measurement getLastMonthsAverage(String sensorId);
+	public Measurement getLastHoursAverage(String location, SensorType type);
+	public Measurement getLastDaysAverage(String location, SensorType type);
+	public Measurement getLastWeeksAverage(String location, SensorType type);
+	public Measurement getLastMonthsAverage(String location, SensorType type);
 
-	public List<Measurement> getLastDayByHours(String sensorId);
-	public List<Measurement> getLastWeekByDays(String sensorId);
-	public List<Measurement> getLastMonthByDays(String sensorId);
-	public List<Measurement> getMeasurementAverages(String sensorId, long startTime, long endTime, long window);
+	public List<Measurement> getLastDayByHours(String location, SensorType type);
+	public List<Measurement> getLastWeekByDays(String location, SensorType type);
+	public List<Measurement> getLastMonthByDays(String location, SensorType type);
+	public List<Measurement> getMeasurementAverages(String location, SensorType type, long startTime, long endTime, long window);
 
-	public Measurement getLastHoursMaximum(String sensorId);
-	public Measurement getLastHoursMinimum(String sensorId);
-	public Measurement getLastDaysMaximum(String sensorId);
-	public Measurement getLastDaysMinimum(String sensorId);
-	public Measurement getLastWeeksMaximum(String sensorId);
-	public Measurement getLastWeeksMinimum(String sensorId);
-	public Measurement getLastMonthsMaximum(String sensorId);
-	public Measurement getLastMonthsMinimum(String sensorId);
-	public Measurement getMaximum(String sensorId, long startTime, long endTime);
-	public Measurement getMinimum(String sensorId, long startTime, long endTime);
+	public Measurement getLastHoursMaximum(String location, SensorType type);
+	public Measurement getLastHoursMinimum(String location, SensorType type);
+	public Measurement getLastDaysMaximum(String location, SensorType type);
+	public Measurement getLastDaysMinimum(String location, SensorType type);
+	public Measurement getLastWeeksMaximum(String location, SensorType type);
+	public Measurement getLastWeeksMinimum(String location, SensorType type);
+	public Measurement getLastMonthsMaximum(String location, SensorType type);
+	public Measurement getLastMonthsMinimum(String location, SensorType type);
+	public Measurement getMaximum(String location, SensorType type, long startTime, long endTime);
+	public Measurement getMinimum(String location, SensorType type, long startTime, long endTime);
 }

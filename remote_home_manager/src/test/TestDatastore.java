@@ -10,6 +10,7 @@ import java.util.Random;
 
 import hu.droidium.remote_home_manager.SQLJetDatastore;
 import hu.droidium.remote_home_manager.Measurement;
+import hu.droidium.remote_home_manager.SensorType;
 
 import org.junit.After;
 import org.junit.Before;
@@ -43,7 +44,7 @@ public class TestDatastore {
 	@Test
 	public void testDatastoreWrite() {
 		SQLJetDatastore datastore = new SQLJetDatastore(TEST_DATASTORE_FILE);
-		boolean save = datastore.saveMeasurement("temp", 123241231l, 35);
+		boolean save = datastore.saveMeasurement("sarok", SensorType.TEMPERATURE, 123241231l, 35);
 		assertTrue(save);
 	}
 
@@ -55,11 +56,11 @@ public class TestDatastore {
 		List<Measurement> toInsert = new LinkedList<Measurement>();
 		long time = startTime;
 		for (int i = 0; i < 100000; i++) {
-			toInsert.add( new Measurement("temp", time, (long)random.nextInt(30)));
+			toInsert.add( new Measurement("sarok", SensorType.TEMPERATURE, time, (long)random.nextInt(30)));
 			time += 50;
 		}
 		datastore.bulkInster(toInsert);
-		List<Measurement> result = datastore.getMeasurements("temp", startTime - 1, time + 1);
+		List<Measurement> result = datastore.getMeasurements("sarok", SensorType.TEMPERATURE, startTime - 1, time + 1);
 		assertEquals(toInsert.size(), result.size());
 		Iterator<Measurement> toInsertIterator = toInsert.iterator();
 		int i = 0;
@@ -68,7 +69,8 @@ public class TestDatastore {
 				System.out.println("Testing " + i);
 			}
 			Measurement inserted = toInsertIterator.next();
-			assertEquals(inserted.getSensorId(), m.getSensorId());
+			assertEquals(inserted.getLocation(), m.getLocation());
+			assertEquals(inserted.getType(), m.getType());
 			assertEquals(inserted.getValue(), m.getValue());
 			assertEquals(inserted.getTime(), m.getTime());
 		}

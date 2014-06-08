@@ -78,13 +78,19 @@ public class SQLJetDatastore implements SensorInterface {
 			}
 		}
 	}
-	public boolean saveMeasurement(String sensorId, long time, long value) {
+	
+	@Override
+	public String[] getLocations() {
+		return null;
+	}
+	
+	public boolean saveMeasurement(String location, SensorType type, long time, long value) {
 		SqlJetDb db = null;
 		try {
 			db = SqlJetDb.open(dbFile, true);
 			db.beginTransaction(SqlJetTransactionMode.WRITE);
 			ISqlJetTable table = db.getTable(MEASUREMENT_TABLE);
-			table.insert(time, sensorId, value);
+			table.insert(time, getSensorId(type, location), value);
 			db.commit();
 			db.close();
 			return true;
@@ -113,7 +119,7 @@ public class SQLJetDatastore implements SensorInterface {
 			ISqlJetTable table = db.getTable(MEASUREMENT_TABLE);
 			int i = 0;
 			for (Measurement measurement : measurements) {
-				table.insert(measurement.getTime(), measurement.getSensorId(), measurement.getValue());
+				table.insert(measurement.getTime(), getSensorId(measurement.getType(), measurement.getLocation()), measurement.getValue());
 				if (i++ % 1000 == 0) {
 					System.out.println("Writing " + i + "th item.");
 				}
@@ -138,7 +144,7 @@ public class SQLJetDatastore implements SensorInterface {
 	}
 	
 	@Override
-	public List<Measurement> getMeasurements(String sensorId, long startTime, long endTime) {
+	public List<Measurement> getMeasurements(String location, SensorType type, long startTime, long endTime) {
 		SqlJetDb db = null;
 		try {
 			db = SqlJetDb.open(dbFile, false);
@@ -149,10 +155,10 @@ public class SQLJetDatastore implements SensorInterface {
 			if (cursor.first()) {
 				do {
 					String recordSensorId = cursor.getString(SENSOR_ID);
-					if (recordSensorId.equals(sensorId)) {
+					if (recordSensorId.equals(getSensorId(type, location))) {
 						Long time = cursor.getInteger(TIME);
 						Long value = cursor.getInteger(VALUE);
-						values.add(new Measurement(recordSensorId, time, value));
+						values.add(new Measurement(getLocation(recordSensorId), getType(recordSensorId), time, value));
 					}
 					
 				} while(cursor.next());
@@ -177,17 +183,17 @@ public class SQLJetDatastore implements SensorInterface {
 	}
 
 	@Override
-	public Measurement getLastMeasurement(String sensorId) {
+	public Measurement getLastMeasurement(String location, SensorType type) {
 		SqlJetDb db = null;
 		try {
 			db = SqlJetDb.open(dbFile, false);
 			db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
 			ISqlJetTable table = db.getTable(MEASUREMENT_TABLE);
-			ISqlJetCursor cursor = table.lookup(MEASUREMENT_SENSOR_INDEX, sensorId).reverse();
+			ISqlJetCursor cursor = table.lookup(MEASUREMENT_SENSOR_INDEX, getSensorId(type, location)).reverse();
 			if (cursor.first()) {
 				Long time = cursor.getInteger(TIME);
 				Long value = cursor.getInteger(VALUE);
-				return new Measurement(sensorId, time, value);
+				return new Measurement(location, type, time, value);
 			}
 			db.close();
 			return null;
@@ -208,14 +214,14 @@ public class SQLJetDatastore implements SensorInterface {
 	}
 
 	@Override
-	public List<Measurement> getLastHoursMeasurements(String sensorId) {
+	public List<Measurement> getLastHoursMeasurements(String location, SensorType type) {
 		Calendar calendar = Calendar.getInstance();
 		calendar.set(Calendar.MILLISECOND, 0);
 		calendar.set(Calendar.SECOND, 0);
 		calendar.set(Calendar.MINUTE, 0);
 		long endTime = calendar.getTimeInMillis();
 		long startTime = endTime - HOUR_MILLIS;
-		return getMeasurements(sensorId, startTime, endTime);
+		return getMeasurements(location, type, startTime, endTime);
 	}
 	
 	private long[] getLastHoursLimits() {
@@ -300,133 +306,133 @@ public class SQLJetDatastore implements SensorInterface {
 	}
 
 	@Override
-	public Measurement getLastHoursAverage(String sensorId) {
+	public Measurement getLastHoursAverage(String location, SensorType type) {
 		long[] limits = getLastHoursLimits();
-		List<Measurement> measurements = getMeasurements(sensorId, limits[0], limits[1]);
+		List<Measurement> measurements = getMeasurements(location, type, limits[0], limits[1]);
 		double total = 0;
 		for (Measurement measurement : measurements) {
 			total = total + measurement.getValue();
 		}
-		return new Measurement(sensorId, (long)(total / measurements.size()), (limits[0] + limits[1] ) / 2);
+		return new Measurement(location, type, (long)(total / measurements.size()), (limits[0] + limits[1] ) / 2);
 	}
 
 	@Override
-	public Measurement getLastDaysAverage(String sensorId) {
+	public Measurement getLastDaysAverage(String location, SensorType type) {
 		long[] limits = getLastDaysLimits();
-		List<Measurement> measurements = getMeasurements(sensorId, limits[0], limits[1]);
+		List<Measurement> measurements = getMeasurements(location, type, limits[0], limits[1]);
 		double total = 0;
 		for (Measurement measurement : measurements) {
 			total = total + measurement.getValue();
 		}
-		return new Measurement(sensorId, (long)(total / measurements.size()), (limits[0] + limits[1]) / 2);
+		return new Measurement(location, type, (long)(total / measurements.size()), (limits[0] + limits[1]) / 2);
 	}
 
 	@Override
-	public Measurement getLastWeeksAverage(String sensorId) {
+	public Measurement getLastWeeksAverage(String location, SensorType type) {
 		long[] limits = getLastWeeksLimits();
-		List<Measurement> measurements = getMeasurements(sensorId, limits[0], limits[1]);
+		List<Measurement> measurements = getMeasurements(location, type, limits[0], limits[1]);
 		double total = 0;
 		for (Measurement measurement : measurements) {
 			total = total + measurement.getValue();
 		}
-		return new Measurement(sensorId, (long)(total / measurements.size()), (limits[0] + limits[1]) / 2);
+		return new Measurement(location, type, (long)(total / measurements.size()), (limits[0] + limits[1]) / 2);
 	}
 
 	@Override
-	public Measurement getLastMonthsAverage(String sensorId) {
+	public Measurement getLastMonthsAverage(String location, SensorType type) {
 		long[] limits = getLastMonthsLimits();
-		List<Measurement> measurements = getMeasurements(sensorId, limits[0], limits[1]);
+		List<Measurement> measurements = getMeasurements(location, type, limits[0], limits[1]);
 		double total = 0;
 		for (Measurement measurement : measurements) {
 			total = total + measurement.getValue();
 		}
-		return new Measurement(sensorId, (long)(total / measurements.size()), (limits[0] + limits[1]) / 2);
+		return new Measurement(location, type, (long)(total / measurements.size()), (limits[0] + limits[1]) / 2);
 	}
 
 	@Override
-	public List<Measurement> getLastDayByHours(String sensorId) {
+	public List<Measurement> getLastDayByHours(String location, SensorType type) {
 		long[] limits = getLastDaysLimits();
-		return getMeasurementAverages(sensorId, limits[0], limits[1], HOUR_MILLIS);
+		return getMeasurementAverages(location, type, limits[0], limits[1], HOUR_MILLIS);
 	}
 
 	@Override
-	public List<Measurement> getLastWeekByDays(String sensorId) {
+	public List<Measurement> getLastWeekByDays(String location, SensorType type) {
 		long[] limits = getLastWeeksLimits();
-		return getMeasurementAverages(sensorId, limits[0], limits[1], 24 * HOUR_MILLIS);
+		return getMeasurementAverages(location, type, limits[0], limits[1], 24 * HOUR_MILLIS);
 	}
 
 	@Override
-	public List<Measurement> getLastMonthByDays(String sensorId) {
+	public List<Measurement> getLastMonthByDays(String location, SensorType type) {
 		long[] limits = getLastMonthsLimits();
-		return getMeasurementAverages(sensorId, limits[0], limits[1], 24 * HOUR_MILLIS);
+		return getMeasurementAverages(location, type, limits[0], limits[1], 24 * HOUR_MILLIS);
 	}
 
 	@Override
-	public List<Measurement> getMeasurementAverages(String sensorId,
+	public List<Measurement> getMeasurementAverages(String location, SensorType type,
 			long startTime, long endTime, long window) {
 		List<Measurement> ret = new LinkedList<Measurement>();
 		for (; startTime < endTime; startTime += window) {
-			List<Measurement> measurements = getMeasurements(sensorId, startTime, endTime);
+			List<Measurement> measurements = getMeasurements(location, type, startTime, endTime);
 			double total = 0;
 			for (Measurement measurement : measurements) {
 				total = total + measurement.getValue();
 			}
-			ret.add(new Measurement(sensorId, (long)(total / measurements.size()), (startTime + endTime) / 2));
+			ret.add(new Measurement(location, type, (long)(total / measurements.size()), (startTime + endTime) / 2));
 		}
 		return ret;
 	}
 
 	@Override
-	public Measurement getLastHoursMaximum(String sensorId) {
+	public Measurement getLastHoursMaximum(String location, SensorType type) {
 		long[] limits = getLastHoursLimits();
-		return getMaximum(sensorId, limits[0], limits[1]);
+		return getMaximum(location, type, limits[0], limits[1]);
 	}
 
 	@Override
-	public Measurement getLastHoursMinimum(String sensorId) {
+	public Measurement getLastHoursMinimum(String location, SensorType type) {
 		long[] limits = getLastHoursLimits();
-		return getMinimum(sensorId, limits[0], limits[1]);
+		return getMinimum(location, type, limits[0], limits[1]);
 	}
 
 	@Override
-	public Measurement getLastDaysMaximum(String sensorId) {
+	public Measurement getLastDaysMaximum(String location, SensorType type) {
 		long[] limits = getLastDaysLimits();
-		return getMaximum(sensorId, limits[0], limits[1]);
+		return getMaximum(location, type, limits[0], limits[1]);
 	}
 
 	@Override
-	public Measurement getLastDaysMinimum(String sensorId) {
+	public Measurement getLastDaysMinimum(String location, SensorType type) {
 		long[] limits = getLastDaysLimits();
-		return getMinimum(sensorId, limits[0], limits[1]);
+		return getMinimum(location, type, limits[0], limits[1]);
 	}
 
 	@Override
-	public Measurement getLastWeeksMaximum(String sensorId) {
+	public Measurement getLastWeeksMaximum(String location, SensorType type) {
 		long[] limits = getLastWeeksLimits();
-		return getMaximum(sensorId, limits[0], limits[1]);
+		return getMaximum(location, type, limits[0], limits[1]);
 	}
 
 	@Override
-	public Measurement getLastWeeksMinimum(String sensorId) {
+	public Measurement getLastWeeksMinimum(String location, SensorType type) {
 		long[] limits = getLastWeeksLimits();
-		return getMinimum(sensorId, limits[0], limits[1]);
+		return getMinimum(location, type, limits[0], limits[1]);
 	}
 
 	@Override
-	public Measurement getLastMonthsMaximum(String sensorId) {
+	public Measurement getLastMonthsMaximum(String location, SensorType type) {
 		long[] limits = getLastMonthsLimits();
-		return getMaximum(sensorId, limits[0], limits[1]);
+		return getMaximum(location, type, limits[0], limits[1]);
 	}
 
 	@Override
-	public Measurement getLastMonthsMinimum(String sensorId) {
+	public Measurement getLastMonthsMinimum(String location, SensorType type) {
 		long[] limits = getLastMonthsLimits();
-		return getMinimum(sensorId, limits[0], limits[1]);
+		return getMinimum(location, type, limits[0], limits[1]);
 	}
 
 	@Override
-	public Measurement getMaximum(String sensorId, long startTime, long endTime) {
-		List<Measurement> measurements = getMeasurements(sensorId, startTime, endTime);
+	public Measurement getMaximum(String location, SensorType type, long startTime, long endTime) {
+		List<Measurement> measurements = getMeasurements(location, type, startTime, endTime);
 		if (measurements.size() > 0) {
 			Measurement max = measurements.get(0);
 			for (Measurement measurement : measurements) {
@@ -441,8 +447,8 @@ public class SQLJetDatastore implements SensorInterface {
 	}
 
 	@Override
-	public Measurement getMinimum(String sensorId, long startTime, long endTime) {
-		List<Measurement> measurements = getMeasurements(sensorId, startTime, endTime);
+	public Measurement getMinimum(String location, SensorType type, long startTime, long endTime) {
+		List<Measurement> measurements = getMeasurements(location, type, startTime, endTime);
 		if (measurements.size() > 0) {
 			Measurement min = measurements.get(0);
 			for (Measurement measurement : measurements) {
@@ -454,5 +460,19 @@ public class SQLJetDatastore implements SensorInterface {
 		} else {
 			return null;
 		}
+	}
+
+	private String getSensorId(SensorType type, String location) {
+		return location + "_" + type.getName();
+	}
+
+	private String getLocation(String recordSensorId) {
+		String[] parts = recordSensorId.split("_");
+		return parts[0];
+	}
+
+	private SensorType getType(String recordSensorId) {
+		String[] parts = recordSensorId.split("_");
+		return SensorType.getType(parts[1]);
 	}
 }

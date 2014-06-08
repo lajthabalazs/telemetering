@@ -1,5 +1,6 @@
 package hu.droidium.remote_home_manager;
 
+import java.util.Calendar;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -8,8 +9,10 @@ public class HungarianLanguageModule implements LanguageInterface {
 	private static final String QUESTION = "(mennyi|hány|milyen|mi|mennyire)";
 	private static final String SENSOR_TYPES = "(meleg|hideg|fok|idő|az idő|hőmérséklet|a hőmérséklet|a légnyomás|világos|sötét|a szél|mozgás|a mozgás)";
 	private static final String DATE_PATTERN = "\\d\\d\\d\\d[/\\-\\.]\\d\\d[/\\-\\.]\\d\\d";
-	private static final String DATE_WITH_SUFFIX = "(ma|tegnap|tegnap előtt|a hét|a múlt hét|múlt hét|hétfő|kedd|szerda?|csütörtök|péntek|szombat|vasárnap|" + DATE_PATTERN + ")";
-	private static final String DATE = DATE_WITH_SUFFIX + "(?:\\-?[eéáöo]?n)*";
+	private static final String SHORT_TIME_PATTERN = "\\d\\d";
+	private static final String TIME_PATTERN = "\\d\\d\\:\\d\\d";
+	private static final String DATE_WITH_SUFFIX = "(ma|tegnap|tegnap előtt|a hét|a múlt hét|múlt hét|hétfő|kedd|szerda?|csütörtök|péntek|szombat|vasárnap|" + DATE_PATTERN + "|" + TIME_PATTERN + "|" + SHORT_TIME_PATTERN + ")";
+	private static final String DATE = DATE_WITH_SUFFIX + "(?:\\-?[eéáöo]?n)*(?:\\-kor)*";
 	
 	@Override
 	public String getResponse(String message, SensorInterface sensorDataStore) {
@@ -51,9 +54,50 @@ public class HungarianLanguageModule implements LanguageInterface {
 				System.out.println("Time: " + pastMatcher.group(5));
 				return null;
 			}
-			return null;
 		}
 		return null;
+	}
+	
+	private static final long[] getTimeLimitsAndWindow(String date) {
+		Calendar calendar = Calendar.getInstance();
+		long[] ret = new long[3];
+		if (date.equals("ma")) {
+			ret[1] = calendar.getTimeInMillis();
+			Utils.stripToDayStart(calendar);
+			ret[0] = calendar.getTimeInMillis();
+			ret[2] = Utils.HOUR_MILLIS;
+		} else if (date.equals("tegnap")) {
+			Utils.stripToDayStart(calendar);
+			ret[0] = calendar.getTimeInMillis() - Utils.DAY_MILLIS;
+			ret[1] = calendar.getTimeInMillis();
+			ret[2] = Utils.HOUR_MILLIS;
+		} else if (date.equals("tegnap előtt")) {
+			Utils.stripToDayStart(calendar);
+			ret[0] = calendar.getTimeInMillis() - Utils.DAY_MILLIS * 2;
+			ret[1] = calendar.getTimeInMillis() - Utils.DAY_MILLIS;
+			ret[2] = Utils.HOUR_MILLIS;
+		} else if (date.equals("a hét")) {
+			ret[1] = calendar.getTimeInMillis();
+			Utils.stripToWeekStart(calendar);
+			ret[0] = calendar.getTimeInMillis();
+			ret[2] = Utils.DAY_MILLIS;
+		} else if (date.equals("a múlt hét") || date.equals("múlt hét")) {
+			Utils.stripToWeekStart(calendar);
+			ret[0] = calendar.getTimeInMillis() - Utils.DAY_MILLIS * 7;
+			ret[1] = calendar.getTimeInMillis();
+			ret[2] = Utils.DAY_MILLIS;
+		} else if (date.equals("hétfő")) {
+		} else if (date.equals("kedd")) {
+		} else if (date.equals("szerd")) {
+		} else if (date.equals("csütörtök")) {
+		} else if (date.equals("péntek")) {
+		} else if (date.equals("szombat")) {
+		} else if (date.equals("vasárnap")) {
+		} else if (date.matches(DATE_PATTERN)) {
+		} else if (date.matches(SHORT_TIME_PATTERN)) {
+		} else if (date.matches(TIME_PATTERN)) {
+		}
+		return ret;
 	}
 	
 	public static void main(String[] args) {
@@ -78,5 +122,9 @@ public class HungarianLanguageModule implements LanguageInterface {
 		new HungarianLanguageModule().getResponse("Mennyire volt hideg szerdán a nappaliban?", null);
 		System.out.println();
 		new HungarianLanguageModule().getResponse("Mennyire volt hideg múlt héten a nappaliban?", null);
+		System.out.println();
+		new HungarianLanguageModule().getResponse("Mennyire volt hideg 11-kor a nappaliban?", null);
+		System.out.println();
+		new HungarianLanguageModule().getResponse("Mennyire volt hideg 11:15-kor a nappaliban?", null);
 	}
 }

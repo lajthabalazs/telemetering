@@ -1,0 +1,458 @@
+package hu.droidium.remote_home_manager;
+
+import java.io.File;
+import java.util.Calendar;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
+import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
+import org.tmatesoft.sqljet.core.table.ISqlJetTable;
+import org.tmatesoft.sqljet.core.table.SqlJetDb;
+
+public class SQLJetDatastore implements SensorInterface {
+	
+	private static final String MEASUREMENT_TABLE = "measurement";
+
+	private static final String SENSOR_ID = "sensor_id";
+	private static final String TIME = "timestamp";
+	private static final String VALUE = "value";
+
+	private static final String CREATE_MEASUREMENT = "CREATE TABLE " + MEASUREMENT_TABLE + " " +
+			"(" +
+			TIME + " INTEGER NOT NULL," +
+			SENSOR_ID + " TEXT NOT NULL," +
+			VALUE + " INTEGER NOT NULL" +
+			")";
+
+	private static final String MEASUREMENT_INDEX = "measurement_index";
+	private static final String MEASUREMENT_SENSOR_INDEX = "measurement_sensor_index";
+	private static final String MEASUREMENT_TIME_INDEX = "measurement_time_index";
+	private static final String CREATE_MEASUREMENT_INDEX = "CREATE INDEX " + MEASUREMENT_INDEX + " ON " + MEASUREMENT_TABLE + "(" + TIME + ", " + SENSOR_ID + ")";
+	private static final String CREATE_MEASUREMENT_SENSOR_INDEX = "CREATE INDEX " + MEASUREMENT_SENSOR_INDEX + " ON " + MEASUREMENT_TABLE + "(" + SENSOR_ID + ")";
+	private static final String CREATE_MEASUREMENT_TIME_INDEX = "CREATE INDEX " + MEASUREMENT_TIME_INDEX + " ON " + MEASUREMENT_TABLE + "(" + TIME + ")";
+
+	private static final long HOUR_MILLIS = 3600000l;
+
+	
+	
+	private File dbFile;
+
+	public SQLJetDatastore(String fileName) {
+		dbFile = new File(fileName);
+		if (!dbFile.exists()) {
+			// Create database
+			SqlJetDb db = null;
+			try {
+				db = SqlJetDb.open(dbFile, true);
+				db.getOptions().setAutovacuum(true);
+			} catch (SqlJetException e) {
+				e.printStackTrace();
+				try {
+					db.close();
+				} catch (Exception e1) {
+					e1.printStackTrace();
+					return;
+				}
+			}
+			try {
+				db.beginTransaction(SqlJetTransactionMode.WRITE);
+				db.createTable(CREATE_MEASUREMENT);
+				db.createIndex(CREATE_MEASUREMENT_INDEX);
+				db.createIndex(CREATE_MEASUREMENT_SENSOR_INDEX);
+				db.createIndex(CREATE_MEASUREMENT_TIME_INDEX);
+				db.commit();
+				db.close();
+				System.out.println("Database created successfully.");
+			} catch (SqlJetException e) {
+				e.printStackTrace();
+				try {
+					db.rollback();
+					db.close();
+				} catch (SqlJetException e1) {
+					e1.printStackTrace();
+				}
+				System.err.println("Deleting inconsistent database file.");
+				dbFile.delete();
+			}
+		}
+	}
+	public boolean saveMeasurement(String sensorId, long time, long value) {
+		SqlJetDb db = null;
+		try {
+			db = SqlJetDb.open(dbFile, true);
+			db.beginTransaction(SqlJetTransactionMode.WRITE);
+			ISqlJetTable table = db.getTable(MEASUREMENT_TABLE);
+			table.insert(time, sensorId, value);
+			db.commit();
+			db.close();
+			return true;
+		} catch (SqlJetException e) {
+			e.printStackTrace();
+			try {
+				db.rollback();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+			}
+			try {
+				db.close();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+			}
+			return false;
+		}
+	}
+	
+	@Override
+	public boolean bulkInster(List<Measurement> measurements) {
+		SqlJetDb db = null;
+		try {
+			db = SqlJetDb.open(dbFile, true);
+			db.beginTransaction(SqlJetTransactionMode.WRITE);
+			ISqlJetTable table = db.getTable(MEASUREMENT_TABLE);
+			int i = 0;
+			for (Measurement measurement : measurements) {
+				table.insert(measurement.getTime(), measurement.getSensorId(), measurement.getValue());
+				if (i++ % 1000 == 0) {
+					System.out.println("Writing " + i + "th item.");
+				}
+			}
+			db.commit();
+			db.close();
+			return true;
+		} catch (SqlJetException e) {
+			e.printStackTrace();
+			try {
+				db.rollback();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+			}
+			try {
+				db.close();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+			}
+			return false;
+		}
+	}
+	
+	@Override
+	public List<Measurement> getMeasurements(String sensorId, long startTime, long endTime) {
+		SqlJetDb db = null;
+		try {
+			db = SqlJetDb.open(dbFile, false);
+			db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+			ISqlJetTable table = db.getTable(MEASUREMENT_TABLE);
+			ISqlJetCursor cursor = table.scope(MEASUREMENT_TIME_INDEX, new Object[] {startTime}, new Object[] {endTime});
+			List<Measurement> values = new LinkedList<Measurement>();
+			if (cursor.first()) {
+				do {
+					String recordSensorId = cursor.getString(SENSOR_ID);
+					if (recordSensorId.equals(sensorId)) {
+						Long time = cursor.getInteger(TIME);
+						Long value = cursor.getInteger(VALUE);
+						values.add(new Measurement(recordSensorId, time, value));
+					}
+					
+				} while(cursor.next());
+			}
+			db.commit();
+			db.close();
+			return values;
+		} catch (SqlJetException e) {
+			e.printStackTrace();
+			try {
+				db.rollback();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+			}
+			try {
+				db.close();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Measurement getLastMeasurement(String sensorId) {
+		SqlJetDb db = null;
+		try {
+			db = SqlJetDb.open(dbFile, false);
+			db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
+			ISqlJetTable table = db.getTable(MEASUREMENT_TABLE);
+			ISqlJetCursor cursor = table.lookup(MEASUREMENT_SENSOR_INDEX, sensorId).reverse();
+			if (cursor.first()) {
+				Long time = cursor.getInteger(TIME);
+				Long value = cursor.getInteger(VALUE);
+				return new Measurement(sensorId, time, value);
+			}
+			db.close();
+			return null;
+		} catch (SqlJetException e) {
+			e.printStackTrace();
+			try {
+				db.rollback();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+			}
+			try {
+				db.close();
+			} catch (SqlJetException e1) {
+				e1.printStackTrace();
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public List<Measurement> getLastHoursMeasurements(String sensorId) {
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(Calendar.MILLISECOND, 0);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MINUTE, 0);
+		long endTime = calendar.getTimeInMillis();
+		long startTime = endTime - HOUR_MILLIS;
+		return getMeasurements(sensorId, startTime, endTime);
+	}
+	
+	private long[] getLastHoursLimits() {
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(Calendar.MILLISECOND, 0);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MINUTE, 0);
+		long endTime = calendar.getTimeInMillis();
+		long startTime = endTime - HOUR_MILLIS;
+		return new long[] {startTime, endTime};
+	}
+	
+	private long[] getLastDaysLimits() {
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(Calendar.MILLISECOND, 0);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MINUTE, 0);
+		calendar.set(Calendar.HOUR_OF_DAY, 0);
+		long endTime = calendar.getTimeInMillis();
+		long startTime = endTime - 24 * HOUR_MILLIS;
+		return new long[] {startTime, endTime};
+	}
+
+	private long[] getLastWeeksLimits() {
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(Calendar.MILLISECOND, 0);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MINUTE, 0);
+		calendar.set(Calendar.HOUR_OF_DAY, 0);
+		int daysPassedInWeek = 0;
+		switch (calendar.get(Calendar.DAY_OF_WEEK)) {
+		case Calendar.MONDAY: {
+			daysPassedInWeek = 0;
+			break;
+		}
+		case Calendar.TUESDAY: {
+			daysPassedInWeek = 1;
+			break;
+		}
+		case Calendar.WEDNESDAY: {
+			daysPassedInWeek = 2;
+			break;
+		}
+		case Calendar.THURSDAY: {
+			daysPassedInWeek = 3;
+			break;
+		}
+		case Calendar.FRIDAY: {
+			daysPassedInWeek = 4;
+			break;
+		}
+		case Calendar.SATURDAY: {
+			daysPassedInWeek = 5;
+			break;
+		}
+		case Calendar.SUNDAY: {
+			daysPassedInWeek = 6;
+			break;
+		}
+		}
+		long endTime = calendar.getTimeInMillis() - daysPassedInWeek * 24 * HOUR_MILLIS;
+		long startTime = endTime - 7 * 24 * HOUR_MILLIS;
+		return new long[] {startTime, endTime};
+	}
+
+	private long[] getLastMonthsLimits() {
+		Calendar calendar = Calendar.getInstance();
+		calendar.set(Calendar.MILLISECOND, 0);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MINUTE, 0);
+		calendar.set(Calendar.HOUR_OF_DAY, 0);
+		calendar.set(Calendar.DAY_OF_MONTH, 1);
+		long endTime = calendar.getTimeInMillis();
+		calendar.setTimeInMillis(calendar.getTimeInMillis() - 37 * HOUR_MILLIS); // Just to make sure we step back more than a day
+		calendar.set(Calendar.MILLISECOND, 0);
+		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MINUTE, 0);
+		calendar.set(Calendar.HOUR_OF_DAY, 0);
+		calendar.set(Calendar.DAY_OF_MONTH, 1);
+		long startTime = calendar.getTimeInMillis();
+		return new long[] {startTime, endTime};
+	}
+
+	@Override
+	public Measurement getLastHoursAverage(String sensorId) {
+		long[] limits = getLastHoursLimits();
+		List<Measurement> measurements = getMeasurements(sensorId, limits[0], limits[1]);
+		double total = 0;
+		for (Measurement measurement : measurements) {
+			total = total + measurement.getValue();
+		}
+		return new Measurement(sensorId, (long)(total / measurements.size()), (limits[0] + limits[1] ) / 2);
+	}
+
+	@Override
+	public Measurement getLastDaysAverage(String sensorId) {
+		long[] limits = getLastDaysLimits();
+		List<Measurement> measurements = getMeasurements(sensorId, limits[0], limits[1]);
+		double total = 0;
+		for (Measurement measurement : measurements) {
+			total = total + measurement.getValue();
+		}
+		return new Measurement(sensorId, (long)(total / measurements.size()), (limits[0] + limits[1]) / 2);
+	}
+
+	@Override
+	public Measurement getLastWeeksAverage(String sensorId) {
+		long[] limits = getLastWeeksLimits();
+		List<Measurement> measurements = getMeasurements(sensorId, limits[0], limits[1]);
+		double total = 0;
+		for (Measurement measurement : measurements) {
+			total = total + measurement.getValue();
+		}
+		return new Measurement(sensorId, (long)(total / measurements.size()), (limits[0] + limits[1]) / 2);
+	}
+
+	@Override
+	public Measurement getLastMonthsAverage(String sensorId) {
+		long[] limits = getLastMonthsLimits();
+		List<Measurement> measurements = getMeasurements(sensorId, limits[0], limits[1]);
+		double total = 0;
+		for (Measurement measurement : measurements) {
+			total = total + measurement.getValue();
+		}
+		return new Measurement(sensorId, (long)(total / measurements.size()), (limits[0] + limits[1]) / 2);
+	}
+
+	@Override
+	public List<Measurement> getLastDayByHours(String sensorId) {
+		long[] limits = getLastDaysLimits();
+		return getMeasurementAverages(sensorId, limits[0], limits[1], HOUR_MILLIS);
+	}
+
+	@Override
+	public List<Measurement> getLastWeekByDays(String sensorId) {
+		long[] limits = getLastWeeksLimits();
+		return getMeasurementAverages(sensorId, limits[0], limits[1], 24 * HOUR_MILLIS);
+	}
+
+	@Override
+	public List<Measurement> getLastMonthByDays(String sensorId) {
+		long[] limits = getLastMonthsLimits();
+		return getMeasurementAverages(sensorId, limits[0], limits[1], 24 * HOUR_MILLIS);
+	}
+
+	@Override
+	public List<Measurement> getMeasurementAverages(String sensorId,
+			long startTime, long endTime, long window) {
+		List<Measurement> ret = new LinkedList<Measurement>();
+		for (; startTime < endTime; startTime += window) {
+			List<Measurement> measurements = getMeasurements(sensorId, startTime, endTime);
+			double total = 0;
+			for (Measurement measurement : measurements) {
+				total = total + measurement.getValue();
+			}
+			ret.add(new Measurement(sensorId, (long)(total / measurements.size()), (startTime + endTime) / 2));
+		}
+		return ret;
+	}
+
+	@Override
+	public Measurement getLastHoursMaximum(String sensorId) {
+		long[] limits = getLastHoursLimits();
+		return getMaximum(sensorId, limits[0], limits[1]);
+	}
+
+	@Override
+	public Measurement getLastHoursMinimum(String sensorId) {
+		long[] limits = getLastHoursLimits();
+		return getMinimum(sensorId, limits[0], limits[1]);
+	}
+
+	@Override
+	public Measurement getLastDaysMaximum(String sensorId) {
+		long[] limits = getLastDaysLimits();
+		return getMaximum(sensorId, limits[0], limits[1]);
+	}
+
+	@Override
+	public Measurement getLastDaysMinimum(String sensorId) {
+		long[] limits = getLastDaysLimits();
+		return getMinimum(sensorId, limits[0], limits[1]);
+	}
+
+	@Override
+	public Measurement getLastWeeksMaximum(String sensorId) {
+		long[] limits = getLastWeeksLimits();
+		return getMaximum(sensorId, limits[0], limits[1]);
+	}
+
+	@Override
+	public Measurement getLastWeeksMinimum(String sensorId) {
+		long[] limits = getLastWeeksLimits();
+		return getMinimum(sensorId, limits[0], limits[1]);
+	}
+
+	@Override
+	public Measurement getLastMonthsMaximum(String sensorId) {
+		long[] limits = getLastMonthsLimits();
+		return getMaximum(sensorId, limits[0], limits[1]);
+	}
+
+	@Override
+	public Measurement getLastMonthsMinimum(String sensorId) {
+		long[] limits = getLastMonthsLimits();
+		return getMinimum(sensorId, limits[0], limits[1]);
+	}
+
+	@Override
+	public Measurement getMaximum(String sensorId, long startTime, long endTime) {
+		List<Measurement> measurements = getMeasurements(sensorId, startTime, endTime);
+		if (measurements.size() > 0) {
+			Measurement max = measurements.get(0);
+			for (Measurement measurement : measurements) {
+				if (measurement.getValue() > max.getValue()) {
+					max = measurement;
+				}
+			}
+			return max;
+		} else {
+			return null;
+		}
+	}
+
+	@Override
+	public Measurement getMinimum(String sensorId, long startTime, long endTime) {
+		List<Measurement> measurements = getMeasurements(sensorId, startTime, endTime);
+		if (measurements.size() > 0) {
+			Measurement min = measurements.get(0);
+			for (Measurement measurement : measurements) {
+				if (measurement.getValue() < min.getValue()) {
+					min = measurement;
+				}
+			}
+			return min;
+		} else {
+			return null;
+		}
+	}
+}

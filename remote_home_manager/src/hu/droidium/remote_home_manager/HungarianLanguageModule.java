@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,10 +43,15 @@ public class HungarianLanguageModule implements LanguageInterface {
 		SENSOR_TYPE_TO_STRING_HASH.put(SensorType.MOVEMENT, "mozgás");
 		SENSOR_TYPE_TO_STRING_HASH.put(SensorType.MOVEMENT, "a mozgás");
 	}
+	private SensorInterface sensorDataStore;
+	
+	public HungarianLanguageModule( SensorInterface sensorDataStore) {
+		this.sensorDataStore = sensorDataStore;
+	}
 	
 	@Override
-	public String getResponse(String message, SensorInterface sensorDataStore) {
-		System.out.println("Question: " + message);
+	public String getResponse(String message) {
+		log("Question: " + message);
 		message = message.toLowerCase();
 		Pattern currentPattern = Pattern.compile(QUESTION + "( van | )" + SENSOR_TYPES + "( van | )(.*)\\?");
 		Matcher currentMatcher = currentPattern.matcher(message.toLowerCase());
@@ -55,9 +61,9 @@ public class HungarianLanguageModule implements LanguageInterface {
 				if (currentMatcher.group(2).equals(" van ") || currentMatcher.group(4).equals(" van ")) {
 					String location = currentMatcher.group(5);
 					SensorType type = SENSOR_TYPE_HASH.get(currentMatcher.group(3));
-					System.out.println("ACTUAL");
-					System.out.println("Sensor type: " + type);
-					System.out.println("Location: " + location);
+					log("ACTUAL");
+					log("Sensor type: " + type);
+					log("Location: " + location);
 					Measurement m = sensorDataStore.getLastMeasurement(location, type);
 					if (m != null) {
 						return m.toString();
@@ -73,11 +79,25 @@ public class HungarianLanguageModule implements LanguageInterface {
 		if (pastMatcher.matches()) {
 			int groups = pastMatcher.groupCount();
 			if (groups == 6) {
-				System.out.println("PAST");
-				System.out.println("Sensor type: " + pastMatcher.group(3));
-				System.out.println("Location: " + pastMatcher.group(5));
-				System.out.println("Time: " + pastMatcher.group(6));
-				return null;
+				String location = pastMatcher.group(5);
+				SensorType type = SENSOR_TYPE_HASH.get(pastMatcher.group(3));
+				log("PAST");
+				log("Sensor type: " + type);
+				log("Location: " + location);
+				log("Time: " + pastMatcher.group(6));
+				long[] limits = getTimeLimitsAndWindow(pastMatcher.group(6));
+				log("Processed time: " + toDate(limits));
+				List<Measurement> m;
+				if (limits[2] != -1) {
+					m = sensorDataStore.getMeasurementAverages(location, type, limits[0], limits[1], limits[2]);
+				} else {
+					m = sensorDataStore.getMeasurements(location, type, limits[0], limits[1]);
+				}
+				if (m == null || m.size() == 0) {
+					return "Nem tudom " + pastMatcher.group(1) + " volt " + pastMatcher.group(3) + " " + location + ".";
+				} else {
+					return m.toString();
+				}
 			}
 		}
 		pastPattern = Pattern.compile(QUESTION + "( volt | )" + SENSOR_TYPES + "( volt | )" + DATE + " (.*)\\?");
@@ -85,13 +105,25 @@ public class HungarianLanguageModule implements LanguageInterface {
 		if (pastMatcher.matches()) {
 			int groups = pastMatcher.groupCount();
 			if (groups == 6) {
-				System.out.println("PAST");
-				System.out.println("Sensor type: " + pastMatcher.group(3));
-				System.out.println("Location: " + pastMatcher.group(6));
-				System.out.println("Time: " + pastMatcher.group(5));
+				String location = pastMatcher.group(6);
+				SensorType type = SENSOR_TYPE_HASH.get(pastMatcher.group(3));
+				log("PAST");
+				log("Sensor type: " + type);
+				log("Location: " + location);
+				log("Time: " + pastMatcher.group(5));
 				long[] limits = getTimeLimitsAndWindow(pastMatcher.group(5));
-				System.out.println("Processed time: " + toDate(limits));
-				return null;
+				log("Processed time: " + toDate(limits));
+				List<Measurement> m;
+				if (limits[2] != -1) {
+					m = sensorDataStore.getMeasurementAverages(location, type, limits[0], limits[1], limits[2]);
+				} else {
+					m = sensorDataStore.getMeasurements(location, type, limits[0], limits[1]);
+				}
+				if (m == null || m.size() == 0) {
+					return "Nem tudom " + pastMatcher.group(1) + " volt " + pastMatcher.group(3) + " " + location + ".";
+				} else {
+					return m.toString();
+				}
 			}
 		}
 		return null;
@@ -208,31 +240,23 @@ public class HungarianLanguageModule implements LanguageInterface {
 	
 	public static void main(String[] args) {
 		SensorInterface sensors = new SQLJetDatastore("empty.sqlite");
-		HungarianLanguageModule module = new HungarianLanguageModule();
-		System.out.println(">> " + module.getResponse("Milyen meleg van a nappaliban?", sensors));
-		System.out.println();
-		System.out.println(">> " + module.getResponse("Mennyire van meleg a nappaliban?", sensors));
-		System.out.println();
-		System.out.println(">> " + module.getResponse("Hány fok volt a nappaliban tegnap?", sensors));
-		System.out.println();
-		System.out.println(">> " + module.getResponse("Hány fok volt tegnap a nappaliban?", sensors));
-		System.out.println();
-		System.out.println(">> " + module.getResponse("Mennyire volt meleg tegnap a nappaliban?", sensors));
-		System.out.println();
-		System.out.println(">> " + module.getResponse("Milyen volt az idő tegnap a nappaliban?", sensors));
-		System.out.println();
-		System.out.println(">> " + module.getResponse("Mennyire volt hideg 2012.12.24-én a nappaliban?", sensors));
-		System.out.println();
-		System.out.println(">> " + module.getResponse("Mennyire volt hideg 2012/12/24-án a nappaliban?", sensors));
-		System.out.println();
-		System.out.println(">> " + module.getResponse("Mennyire volt hideg tegnap a nappaliban?", sensors));
-		System.out.println();
-		System.out.println(">> " + module.getResponse("Mennyire volt hideg szerdán a nappaliban?", sensors));
-		System.out.println();
-		System.out.println(">> " + module.getResponse("Mennyire volt hideg múlt héten a nappaliban?", sensors));
-		System.out.println();
-		System.out.println(">> " + module.getResponse("Mennyire volt hideg 11-kor a nappaliban?", sensors));
-		System.out.println();
-		System.out.println(">> " + module.getResponse("Mennyire volt hideg 11:15-kor a nappaliban?", sensors));
+		HungarianLanguageModule module = new HungarianLanguageModule(sensors);
+		log(">> " + module.getResponse("Milyen meleg van a nappaliban?"));
+		log(">> " + module.getResponse("Mennyire van meleg a nappaliban?"));
+		log(">> " + module.getResponse("Hány fok volt a nappaliban tegnap?"));
+		log(">> " + module.getResponse("Hány fok volt tegnap a nappaliban?"));
+		log(">> " + module.getResponse("Mennyire volt meleg tegnap a nappaliban?"));
+		log(">> " + module.getResponse("Milyen volt az idő tegnap a nappaliban?"));
+		log(">> " + module.getResponse("Mennyire volt hideg 2012.12.24-én a nappaliban?"));
+		log(">> " + module.getResponse("Mennyire volt hideg 2012/12/24-án a nappaliban?"));
+		log(">> " + module.getResponse("Mennyire volt hideg tegnap a nappaliban?"));
+		log(">> " + module.getResponse("Mennyire volt hideg szerdán a nappaliban?"));
+		log(">> " + module.getResponse("Mennyire volt hideg múlt héten a nappaliban?"));
+		log(">> " + module.getResponse("Mennyire volt hideg 11-kor a nappaliban?"));
+		log(">> " + module.getResponse("Mennyire volt hideg 11:15-kor a nappaliban?"));
+	}
+	
+	private static final void log(String string){
+		//System.out.println(string);
 	}
 }

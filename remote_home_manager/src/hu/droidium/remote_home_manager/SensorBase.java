@@ -174,7 +174,7 @@ public abstract class SensorBase implements SensorInterface {
 		List<Measurement> ret = new LinkedList<Measurement>();
 		for (; startTime < endTime; startTime += window) {
 			List<Measurement> measurements = getMeasurements(location, type, startTime, endTime);
-			if (measurements.size() > 0) {
+			if (measurements != null && measurements.size() > 0) {
 				double total = 0;
 				for (Measurement measurement : measurements) {
 					total = total + measurement.getValue();

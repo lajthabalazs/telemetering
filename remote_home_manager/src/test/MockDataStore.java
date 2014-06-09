@@ -68,7 +68,7 @@ public class MockDataStore extends SensorBase {
 	public List<Measurement> getMeasurementAverages(String location,
 			SensorType type, long startTime, long endTime, long window) {
 		calls.add(new Call(Method.GET_AVERAGES, location, type, startTime, endTime, window));
-		return super.getMeasurementAverages(location, type, startTime, endTime, window);
+		return null;
 	}
 	
 	@Override

@@ -18,41 +18,44 @@ public class Utils {
 		calendar.set(Calendar.SECOND, 0);
 		calendar.set(Calendar.MINUTE, 0);
 		calendar.set(Calendar.HOUR_OF_DAY, 0);
-		int daysPassedInWeek = 0;
-		switch (calendar.get(Calendar.DAY_OF_WEEK)) {
-		case Calendar.MONDAY: {
-			daysPassedInWeek = 0;
-			break;
-		}
-		case Calendar.TUESDAY: {
-			daysPassedInWeek = 1;
-			break;
-		}
-		case Calendar.WEDNESDAY: {
-			daysPassedInWeek = 2;
-			break;
-		}
-		case Calendar.THURSDAY: {
-			daysPassedInWeek = 3;
-			break;
-		}
-		case Calendar.FRIDAY: {
-			daysPassedInWeek = 4;
-			break;
-		}
-		case Calendar.SATURDAY: {
-			daysPassedInWeek = 5;
-			break;
-		}
-		case Calendar.SUNDAY: {
-			daysPassedInWeek = 6;
-			break;
-		}
-		}
+		int daysPassedInWeek = getDayOfWeekIndex(calendar);
 		long endTime = calendar.getTimeInMillis() - daysPassedInWeek * 24 * HOUR_MILLIS;
 		calendar.setTimeInMillis(endTime);
 		
 	}
 
-
+	public static int getDayOfWeekIndex(Calendar calendar) {
+		int index = 0;
+		switch (calendar.get(Calendar.DAY_OF_WEEK)) {
+		case Calendar.MONDAY: {
+			index = 0;
+			break;
+		}
+		case Calendar.TUESDAY: {
+			index = 1;
+			break;
+		}
+		case Calendar.WEDNESDAY: {
+			index = 2;
+			break;
+		}
+		case Calendar.THURSDAY: {
+			index = 3;
+			break;
+		}
+		case Calendar.FRIDAY: {
+			index = 4;
+			break;
+		}
+		case Calendar.SATURDAY: {
+			index = 5;
+			break;
+		}
+		case Calendar.SUNDAY: {
+			index = 6;
+			break;
+		}
+		}
+		return index;
+	}
 }

@@ -3,6 +3,7 @@ package hu.droidium.remote_home_manager;
 public enum SensorType {
 	TEMPERATURE("temp"),
 	LIGHT("light"),
+	WIND("wind"),
 	NOISE("noise"),
 	MOVEMENT("movement"),
 	HUMIDITY("humidity"),

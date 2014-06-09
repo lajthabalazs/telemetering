@@ -226,3 +226,5 @@ pip-log.txt
 #############
 
 remote_home_manager/test_datastore.sqlite
+remote_home_manager/temp.sqlite
+remote_home_manager/empty.sqlite

@@ -15,7 +15,7 @@ public class HungarianLanguageModule implements LanguageInterface {
 	private static final String DATE_PATTERN = "\\d\\d\\d\\d[/\\-\\.]\\d\\d[/\\-\\.]\\d\\d";
 	private static final String SHORT_TIME_PATTERN = "\\d\\d";
 	private static final String TIME_PATTERN = "\\d\\d\\:\\d\\d";
-	private static final String DATE_WITH_SUFFIX = "(ma|tegnap|tegnap előtt|a hét|a múlt hét|múlt hét|hétfő|kedd|szerda?|csütörtök|péntek|szombat|vasárnap|" + DATE_PATTERN + "|" + TIME_PATTERN + "|" + SHORT_TIME_PATTERN + ")";
+	private static final String DATE_WITH_SUFFIX = "(ma|tegnap|tegnapelőtt|a hét|a múlt hét|múlt hét|hétfő|kedd|szerda?|csütörtök|péntek|szombat|vasárnap|" + DATE_PATTERN + "|" + TIME_PATTERN + "|" + SHORT_TIME_PATTERN + ")";
 	private static final String DATE = DATE_WITH_SUFFIX + "(?:\\-?[eéáöo]?n)*(?:\\-kor)*";
 	private static final HashMap<String, SensorType> SENSOR_TYPE_HASH = new HashMap<String,SensorType>();
 	static {
@@ -23,6 +23,7 @@ public class HungarianLanguageModule implements LanguageInterface {
 		SENSOR_TYPE_HASH.put("hideg", SensorType.TEMPERATURE);
 		SENSOR_TYPE_HASH.put("fok", SensorType.TEMPERATURE);
 		SENSOR_TYPE_HASH.put("idő", SensorType.TEMPERATURE);
+		SENSOR_TYPE_HASH.put("az idő", SensorType.TEMPERATURE);
 		SENSOR_TYPE_HASH.put("hőmérséklet", SensorType.TEMPERATURE);
 		SENSOR_TYPE_HASH.put("a hőmérséklet", SensorType.TEMPERATURE);
 		SENSOR_TYPE_HASH.put("a légnyomás", SensorType.PRESSURE);
@@ -50,8 +51,10 @@ public class HungarianLanguageModule implements LanguageInterface {
 	}
 	
 	@Override
-	public String getResponse(String message) {
+	public String getResponse(String message, long time) {
 		log("Question: " + message);
+		SimpleDateFormat format = new SimpleDateFormat("YYYY/MM/dd HH:mm");
+		log("Now " + format.format(new Date(time)));
 		message = message.toLowerCase();
 		Pattern currentPattern = Pattern.compile(QUESTION + "( van | )" + SENSOR_TYPES + "( van | )(.*)\\?");
 		Matcher currentMatcher = currentPattern.matcher(message.toLowerCase());
@@ -85,7 +88,7 @@ public class HungarianLanguageModule implements LanguageInterface {
 				log("Sensor type: " + type);
 				log("Location: " + location);
 				log("Time: " + pastMatcher.group(6));
-				long[] limits = getTimeLimitsAndWindow(pastMatcher.group(6));
+				long[] limits = getTimeLimitsAndWindow(pastMatcher.group(6), time);
 				log("Processed time: " + toDate(limits));
 				List<Measurement> m;
 				if (limits[2] != -1) {
@@ -111,7 +114,7 @@ public class HungarianLanguageModule implements LanguageInterface {
 				log("Sensor type: " + type);
 				log("Location: " + location);
 				log("Time: " + pastMatcher.group(5));
-				long[] limits = getTimeLimitsAndWindow(pastMatcher.group(5));
+				long[] limits = getTimeLimitsAndWindow(pastMatcher.group(5), time);
 				log("Processed time: " + toDate(limits));
 				List<Measurement> m;
 				if (limits[2] != -1) {
@@ -140,8 +143,9 @@ public class HungarianLanguageModule implements LanguageInterface {
 		return ret;
 	}
 
-	private static final long[] getTimeLimitsAndWindow(String date) {
+	private static final long[] getTimeLimitsAndWindow(String date, long time) {
 		Calendar calendar = Calendar.getInstance();
+		calendar.setTimeInMillis(time);
 		long[] ret = new long[3];
 		if (date.equals("ma")) {
 			ret[1] = calendar.getTimeInMillis();
@@ -153,7 +157,7 @@ public class HungarianLanguageModule implements LanguageInterface {
 			ret[0] = calendar.getTimeInMillis() - Utils.DAY_MILLIS;
 			ret[1] = calendar.getTimeInMillis();
 			ret[2] = Utils.HOUR_MILLIS;
-		} else if (date.equals("tegnap előtt")) {
+		} else if (date.equals("tegnapelőtt")) {
 			Utils.stripToDayStart(calendar);
 			ret[0] = calendar.getTimeInMillis() - Utils.DAY_MILLIS * 2;
 			ret[1] = calendar.getTimeInMillis() - Utils.DAY_MILLIS;
@@ -196,11 +200,13 @@ public class HungarianLanguageModule implements LanguageInterface {
 			ret[2] = Utils.HOUR_MILLIS;
 		} else if (date.matches(SHORT_TIME_PATTERN)) {
 			int hour = calendar.get(Calendar.HOUR_OF_DAY);
-			Utils.stripToDayStart(calendar);
 			if (hour < Integer.parseInt(date)) {
 				calendar.setTimeInMillis(calendar.getTimeInMillis() - Utils.DAY_MILLIS);
 			}
 			calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(date));
+			calendar.set(Calendar.MINUTE, 0);
+			calendar.set(Calendar.SECOND, 0);
+			calendar.set(Calendar.MILLISECOND, 0);
 			ret[0] = calendar.getTimeInMillis() - Utils.HOUR_MILLIS / 2;
 			ret[1] = calendar.getTimeInMillis() + Utils.HOUR_MILLIS / 2;
 			ret[2] = -1;
@@ -209,6 +215,9 @@ public class HungarianLanguageModule implements LanguageInterface {
 			int minute = calendar.get(Calendar.MINUTE);
 			int requestedHour = Integer.parseInt(date.substring(0,2));
 			int requestedMinute = Integer.parseInt(date.substring(3,5));
+			calendar.set(Calendar.MILLISECOND, 0);
+			calendar.set(Calendar.SECOND, 0);
+			calendar.set(Calendar.MINUTE, 0);
 			if (hour < requestedHour || (hour == requestedHour && minute > requestedMinute)) {
 				calendar.setTimeInMillis(calendar.getTimeInMillis() - Utils.DAY_MILLIS);
 			}
@@ -228,12 +237,12 @@ public class HungarianLanguageModule implements LanguageInterface {
 			Utils.stripToWeekStart(calendar);
 			ret[0] = calendar.getTimeInMillis() + dayIndex * Utils.DAY_MILLIS;
 			ret[1] = calendar.getTimeInMillis() + (dayIndex + 1) * Utils.DAY_MILLIS;
-			ret[2] = Utils.DAY_MILLIS;
+			ret[2] = Utils.HOUR_MILLIS;
 		} else { // Last week
 			Utils.stripToWeekStart(calendar);
 			ret[0] = calendar.getTimeInMillis() - (7 - dayIndex) * Utils.DAY_MILLIS;
 			ret[1] = calendar.getTimeInMillis() - (6 - dayIndex) * Utils.DAY_MILLIS;
-			ret[2] = Utils.DAY_MILLIS;
+			ret[2] = Utils.HOUR_MILLIS;
 		}
 		return ret;
 	}
@@ -241,22 +250,23 @@ public class HungarianLanguageModule implements LanguageInterface {
 	public static void main(String[] args) {
 		SensorInterface sensors = new SQLJetDatastore("empty.sqlite");
 		HungarianLanguageModule module = new HungarianLanguageModule(sensors);
-		log(">> " + module.getResponse("Milyen meleg van a nappaliban?"));
-		log(">> " + module.getResponse("Mennyire van meleg a nappaliban?"));
-		log(">> " + module.getResponse("Hány fok volt a nappaliban tegnap?"));
-		log(">> " + module.getResponse("Hány fok volt tegnap a nappaliban?"));
-		log(">> " + module.getResponse("Mennyire volt meleg tegnap a nappaliban?"));
-		log(">> " + module.getResponse("Milyen volt az idő tegnap a nappaliban?"));
-		log(">> " + module.getResponse("Mennyire volt hideg 2012.12.24-én a nappaliban?"));
-		log(">> " + module.getResponse("Mennyire volt hideg 2012/12/24-án a nappaliban?"));
-		log(">> " + module.getResponse("Mennyire volt hideg tegnap a nappaliban?"));
-		log(">> " + module.getResponse("Mennyire volt hideg szerdán a nappaliban?"));
-		log(">> " + module.getResponse("Mennyire volt hideg múlt héten a nappaliban?"));
-		log(">> " + module.getResponse("Mennyire volt hideg 11-kor a nappaliban?"));
-		log(">> " + module.getResponse("Mennyire volt hideg 11:15-kor a nappaliban?"));
+		long now = System.currentTimeMillis();
+		log(">> " + module.getResponse("Milyen meleg van a nappaliban?", now));
+		log(">> " + module.getResponse("Mennyire van meleg a nappaliban?", now));
+		log(">> " + module.getResponse("Hány fok volt a nappaliban tegnap?", now));
+		log(">> " + module.getResponse("Hány fok volt tegnap a nappaliban?", now));
+		log(">> " + module.getResponse("Mennyire volt meleg tegnap a nappaliban?", now));
+		log(">> " + module.getResponse("Milyen volt az idő tegnap a nappaliban?", now));
+		log(">> " + module.getResponse("Mennyire volt hideg 2012.12.24-én a nappaliban?", now));
+		log(">> " + module.getResponse("Mennyire volt hideg 2012/12/24-án a nappaliban?", now));
+		log(">> " + module.getResponse("Mennyire volt hideg tegnap a nappaliban?", now));
+		log(">> " + module.getResponse("Mennyire volt hideg szerdán a nappaliban?", now));
+		log(">> " + module.getResponse("Mennyire volt hideg múlt héten a nappaliban?", now));
+		log(">> " + module.getResponse("Mennyire volt hideg 11-kor a nappaliban?", now));
+		log(">> " + module.getResponse("Mennyire volt hideg 11:15-kor a nappaliban?", now));
 	}
 	
 	private static final void log(String string){
-		//System.out.println(string);
+		System.out.println(string);
 	}
 }

@@ -1,161 +1,80 @@
 package test;
 
+import java.util.LinkedList;
 import java.util.List;
 
 import hu.droidium.remote_home_manager.Measurement;
-import hu.droidium.remote_home_manager.SensorInterface;
+import hu.droidium.remote_home_manager.SensorBase;
 import hu.droidium.remote_home_manager.SensorType;
 
-public class MockDataStore implements SensorInterface{
-
-	@Override
-	public String[] getLocations() {
-		// TODO Auto-generated method stub
-		return null;
+public class MockDataStore extends SensorBase {
+	
+	public enum Method {
+		GET_LAST_MEASUREMENT, GET_MEASUREMENTS, GET_AVERAGES
 	}
 
-	@Override
-	public boolean saveMeasurement(String location, SensorType type, long time,
-			long value) {
-		// TODO Auto-generated method stub
-		return false;
+	public class Call {
+		public final Method method;
+		public final String location;
+		public final SensorType type;
+		public final long startTime;
+		public final long endTime;
+		public final long window;
+		
+		public Call(Method method, String location, SensorType type, long startTime, long endTime, long window) {
+			this.method = method;
+			this.location = location;
+			this.type = type;
+			this.startTime = startTime;
+			this.endTime = endTime;
+			this.window = window;
+		}
+		public Call(Method method, String location, SensorType type, long startTime, long endTime) {
+			this.method = method;
+			this.location = location;
+			this.type = type;
+			this.startTime = startTime;
+			this.endTime = endTime;
+			this.window = -1;
+		}
+		public Call(Method method, String location, SensorType type) {
+			this.method = method;
+			this.location = location;
+			this.type = type;
+			this.startTime = -1;
+			this.endTime = -1;
+			this.window = -1;
+		}
+
 	}
 
-	@Override
-	public boolean bulkInster(List<Measurement> measurements) {
-		// TODO Auto-generated method stub
-		return false;
+	private List<Call> calls = new LinkedList<Call>();
+	
+	public void clear() {
+		calls.clear();
+	}
+	
+	public List<Call> getCalls() {
+		return new LinkedList<Call>(calls);
 	}
 
 	@Override
 	public Measurement getLastMeasurement(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
+		calls.add(new Call(Method.GET_LAST_MEASUREMENT, location, type));
+		return super.getLastMeasurement(location, type);
 	}
-
-	@Override
-	public List<Measurement> getLastHoursMeasurements(String location,
-			SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Measurement> getMeasurements(String location, SensorType type,
-			long startTime, long endTime) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastHoursAverage(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastDaysAverage(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastWeeksAverage(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastMonthsAverage(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Measurement> getLastDayByHours(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Measurement> getLastWeekByDays(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Measurement> getLastMonthByDays(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
+	
 	@Override
 	public List<Measurement> getMeasurementAverages(String location,
 			SensorType type, long startTime, long endTime, long window) {
-		// TODO Auto-generated method stub
-		return null;
+		calls.add(new Call(Method.GET_AVERAGES, location, type, startTime, endTime, window));
+		return super.getMeasurementAverages(location, type, startTime, endTime, window);
 	}
-
+	
 	@Override
-	public Measurement getLastHoursMaximum(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastHoursMinimum(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastDaysMaximum(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastDaysMinimum(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastWeeksMaximum(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastWeeksMinimum(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastMonthsMaximum(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastMonthsMinimum(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getMaximum(String location, SensorType type,
+	public List<Measurement> getMeasurements(String location, SensorType type,
 			long startTime, long endTime) {
-		// TODO Auto-generated method stub
-		return null;
+		calls.add(new Call(Method.GET_MEASUREMENTS, location, type, startTime, endTime));
+		return super.getMeasurements(location, type, startTime, endTime);
 	}
-
-	@Override
-	public Measurement getMinimum(String location, SensorType type,
-			long startTime, long endTime) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }

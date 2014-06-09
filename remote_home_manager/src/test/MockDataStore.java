@@ -61,7 +61,7 @@ public class MockDataStore extends SensorBase {
 	@Override
 	public Measurement getLastMeasurement(String location, SensorType type) {
 		calls.add(new Call(Method.GET_LAST_MEASUREMENT, location, type));
-		return super.getLastMeasurement(location, type);
+		return null;
 	}
 	
 	@Override
@@ -75,6 +75,17 @@ public class MockDataStore extends SensorBase {
 	public List<Measurement> getMeasurements(String location, SensorType type,
 			long startTime, long endTime) {
 		calls.add(new Call(Method.GET_MEASUREMENTS, location, type, startTime, endTime));
-		return super.getMeasurements(location, type, startTime, endTime);
+		return null;
+	}
+
+	@Override
+	public boolean saveMeasurement(String location, SensorType type, long time,
+			long value) {
+		return false;
+	}
+
+	@Override
+	public boolean bulkInster(List<Measurement> measurements) {
+		return false;
 	}
 }

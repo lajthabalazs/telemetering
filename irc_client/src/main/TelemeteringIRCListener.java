@@ -1,6 +1,6 @@
 package main;
 
-import hu.droidium.remote_home_manager.LanguageInterface;
+import hu.droidium.telemetering.interfaces.LanguageInterface;
 
 import org.pircbotx.PircBotX;
 import org.pircbotx.hooks.ListenerAdapter;
@@ -15,7 +15,7 @@ public class TelemeteringIRCListener extends ListenerAdapter<PircBotX> {
 	public TelemeteringIRCListener(LanguageInterface languageInterface) {
 		this.languageInterface = languageInterface;
 	}
-
+	
 	@Override
 	public void onGenericMessage(final GenericMessageEvent<PircBotX> event) throws Exception {
 		if (event instanceof PrivateMessageEvent) {

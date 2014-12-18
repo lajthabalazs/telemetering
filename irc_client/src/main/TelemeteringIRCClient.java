@@ -1,10 +1,7 @@
 package main;
 
-import hu.droidium.remote_home_manager.HungarianLanguageModule;
-import hu.droidium.remote_home_manager.LanguageInterface;
-import hu.droidium.remote_home_manager.SQLJetDatastore;
-
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 import org.pircbotx.Configuration.Builder;
 import org.pircbotx.PircBotX;
@@ -21,20 +18,17 @@ public class TelemeteringIRCClient {
 		builder.setAutoReconnect(false);
 		builder.addAutoJoinChannel(channel);
 		builder.setCapEnabled(false);
+		builder.setEncoding(Charset.forName("UTF-8"));
+		//builder.setEncoding(Charset.forName("ISO-8859-15"));
+		//builder.setEncoding(Charset.forName("CP1252"));
 		//builder.addCapHandler(new TLSCapHandler(new UtilSSLSocketFactory().trustAllCertificates(), true));
 		builder.addListener(listener);
 		PircBotX bot = new PircBotX(builder.buildConfiguration());
+		System.out.println("Encoding : " + bot.getConfiguration().getEncoding());
 		try {
 			bot.startBot();
 		} catch (IOException | IrcException e) {
 			e.printStackTrace();
 		}
-	}
-	
-	public static void main(String[] args) {
-		SQLJetDatastore datastore = new SQLJetDatastore("temp.sqlite");
-		LanguageInterface languageInterface = new HungarianLanguageModule(datastore);
-		TelemeteringIRCListener listener = new TelemeteringIRCListener(languageInterface);
-		new TelemeteringIRCClient("lovas_telemetering_client", "irc.chatjunkies.org", 6667, "#xchat", listener);
-	}
+	}	
 }

@@ -54,6 +54,7 @@ public class LovasRaspberrySingleNode extends SQLJetDatastore{
 		int port;
 		String chatRoom;
 		boolean demoMode;
+		boolean ui;
 		if (args.length == 6) {
 			databaseFile = args[0];
 			userName = args[1];
@@ -61,6 +62,7 @@ public class LovasRaspberrySingleNode extends SQLJetDatastore{
 			port = Integer.parseInt(args[3]);
 			chatRoom = args[4];
 			demoMode = Boolean.parseBoolean(args[5]);
+			ui = false;
 		} else {
 			databaseFile = "temp.sqlite";
 			userName = "lovas_telemetering_client";
@@ -68,13 +70,13 @@ public class LovasRaspberrySingleNode extends SQLJetDatastore{
 			port = 6667;
 			chatRoom = "#xchat";
 			demoMode = true;
+			ui = true;
 		}
 		LovasRaspberrySingleNode node = new LovasRaspberrySingleNode(databaseFile, demoMode);
 		node.run();		
 		LanguageInterface languageInterface = new HungarianLanguageModule(node);
-		if (!demoMode) {
-			new TelemeteringIRCClient(userName, chatServer, port, chatRoom, languageInterface);
-		} else {
+		new TelemeteringIRCClient(userName, chatServer, port, chatRoom, languageInterface);
+		if (ui) {
 			new GUIClient(languageInterface);
 		}
 	}

@@ -4,6 +4,8 @@ import hu.droidium.telemetering.interfaces.Measurement;
 import hu.droidium.telemetering.interfaces.SensorType;
 
 import java.io.File;
+import java.time.Period;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -145,6 +147,7 @@ public class SQLJetDatastore extends DatastoreBase {
 	@Override
 	public List<Measurement> getMeasurements(String location, SensorType type, long startTime, long endTime) {
 		SqlJetDb db = null;
+		System.out.println("Getting measurements " + location + " " + type + " " + startTime +" " + endTime);
 		try {
 			db = SqlJetDb.open(dbFile, false);
 			db.beginTransaction(SqlJetTransactionMode.READ_ONLY);
@@ -205,6 +208,9 @@ public class SQLJetDatastore extends DatastoreBase {
 	@Override
 	public List<Measurement> getMeasurementAverages(String location, SensorType type,
 			long startTime, long endTime, long window) {
+		System.out.println("Start " + HungarianLanguageModule.timestampFormat.format(new Date(startTime)));
+		System.out.println("End " + HungarianLanguageModule.timestampFormat.format(new Date(endTime)));
+		System.out.println("Period " + window / 60000);
 		List<Measurement> ret = new LinkedList<Measurement>();
 		for (; startTime < endTime; startTime += window) {
 			List<Measurement> measurements = getMeasurements(location, type, startTime, endTime);
@@ -213,11 +219,8 @@ public class SQLJetDatastore extends DatastoreBase {
 				for (Measurement measurement : measurements) {
 					total = total + measurement.getValue();
 				}
-				long time = (startTime + endTime) / 2;
 				long value = (long)(total / measurements.size());
-				ret.add(new Measurement(location, type, time , value));
-			} else {
-				ret.add(null);
+				ret.add(new Measurement(location, type, startTime , value));
 			}
 		}
 		return ret;

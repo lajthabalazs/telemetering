@@ -25,7 +25,10 @@ public class TelemeteringIRCListener extends ListenerAdapter<PircBotX> {
 			if (response != null) {
 				Thread.sleep(500);
 				System.out.println("Responding: " + response);
-				event.respond(response);
+				String[] parts = response.split("\n");
+				for (String part : parts) {
+					event.respond(part);
+				}
 			}
 		} else {
 			System.out.println("Channel message received: " + event.getMessage());

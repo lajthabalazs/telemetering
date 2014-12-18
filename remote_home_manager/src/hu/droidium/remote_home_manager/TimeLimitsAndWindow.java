@@ -32,4 +32,8 @@ public class TimeLimitsAndWindow {
 	public void setPeriod(TimePeriod period) {
 		this.period = period;
 	}
+
+	public TimePeriod getTimePeriod() {
+		return period;
+	}
 }

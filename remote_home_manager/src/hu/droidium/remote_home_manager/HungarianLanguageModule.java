@@ -15,6 +15,15 @@ import java.util.regex.Pattern;
 
 public class HungarianLanguageModule implements LanguageInterface {
 
+	// Formats for lines
+	public static final SimpleDateFormat timestampFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+	public static final SimpleDateFormat halfHourFormat = new SimpleDateFormat("dd. HH:mm");
+	public static final SimpleDateFormat hourFormat = new SimpleDateFormat("MM/dd HH'h'");
+	public static final SimpleDateFormat dayFormatLong = new SimpleDateFormat("yyyy/MM/dd");
+	public static final SimpleDateFormat dayFormat = new SimpleDateFormat("MM/dd");
+	public static final SimpleDateFormat weeFormat = new SimpleDateFormat("yyyy 'w. hét'");
+	
+	
 	private static final String QUESTION = "(mennyi|hány|milyen|mi|mennyire)";
 	private static final String SENSOR_TYPES = "(meleg|hideg|fok|idő|az idő|hőmérséklet|a hőmérséklet|a légnyomás|világos|sötét|a szél|mozgás|a mozgás)";
 	private static final String DATE_PATTERN = "\\d\\d\\d\\d[/\\-\\.]\\d\\d[/\\-\\.]\\d\\d";
@@ -64,6 +73,7 @@ public class HungarianLanguageModule implements LanguageInterface {
 		Pattern currentPattern = Pattern.compile(QUESTION + "( van | )" + SENSOR_TYPES + "( van | )(.*)\\?");
 		Matcher currentMatcher = currentPattern.matcher(message.toLowerCase());
 		if (currentMatcher.matches()) {
+			System.out.println("Current matcher matches pattern.");
 			int groups = currentMatcher.groupCount();
 			if (groups == 5) {
 				if (currentMatcher.group(2).equals(" van ") || currentMatcher.group(4).equals(" van ")) {
@@ -75,12 +85,16 @@ public class HungarianLanguageModule implements LanguageInterface {
 					log("Time: Last measurement");
 					Measurement m = sensorDataStore.getLastMeasurement(location, type);
 					if (m != null) {
-						return measurementToString(m);
+						return presentMeasurementToString(m);
 					} else {
 						return "Nem tudom " + currentMatcher.group(1) + " " + currentMatcher.group(3) + " van " + location + ".";
 					}
 					 
+				} else {
+					System.out.println("Not van: >" + currentMatcher.group(2) + "< or this >" + currentMatcher.group(4) + "< ");
 				}
+			} else {
+				System.out.println("Invalid number of groups " + groups);				
 			}
 		}
 		Pattern firstPastPattern = Pattern.compile(QUESTION + "( volt | )" + SENSOR_TYPES + "( volt | )(.*) " + DATE + "\\?");
@@ -134,9 +148,10 @@ public class HungarianLanguageModule implements LanguageInterface {
 				}
 				System.out.println("Found measurements " + m);
 				if (m == null || m.size() == 0) {
-					return "Nem tudom " + question + " volt " + type + " " + location + ".";
+					return "Nem tudom " + question + " meleg volt " + queryTime + " " + location + ".";
 				} else {
-					return measurementsToString(m, TimeFrame.DAY, TimePeriod.HOUR); // TODO adjust time period
+					TimeFrame frame = TimeFrame.DAY;
+					return measurementsToString(m, location, limits.getStart(), frame, limits.getTimePeriod());
 				}
 			}
 		}
@@ -262,23 +277,36 @@ public class HungarianLanguageModule implements LanguageInterface {
 		return limits;
 	}
 
-	private static String measurementToString(Measurement m) {
+	private static String presentMeasurementToString(Measurement m) {
 		return m.getLocation() + " " + m.getValue() + " fok van.";
 	}
 
-	private static String measurementToStringWithTime(Measurement m, TimeFrame timeFrame, TimePeriod timePeriod) {
-		return m.getLocation() + " " + m.getValue() + " fok van.";
+	private static String pastMeasurementToString(Measurement m, TimePeriod timePeriod) {
+		if (timePeriod != null) {
+			switch(timePeriod) {
+			case HALF_HOUR:
+				return halfHourFormat.format(new Date(m.getTime())) + " " + m.getValue() + " C";
+			case HOUR:
+				return hourFormat.format(new Date(m.getTime())) + " " + m.getValue() + " C";
+			case DAY:
+				return dayFormat.format(new Date(m.getTime())) + " " + m.getValue() + " C";
+			case WEEK:
+				return weeFormat.format(new Date(m.getTime())) + " " + m.getValue() + " C";
+			}
+		}
+		return m.getLocation() + " " + timestampFormat.format(new Date(m.getTime())) + " " + m.getValue() + " fok volt.";
 	}
 
-	private static String measurementsToString(List<Measurement> ms, TimeFrame timeFrame, TimePeriod timePeriod) {
+	private static String measurementsToString(List<Measurement> ms, String location, long startTime, TimeFrame timeFrame, TimePeriod timePeriod) {
 		String ret = "";
 		for (Measurement m : ms) {
 			if (ret.length() > 0) {
 				ret = ret + "\n";
 			}
-			ret = ret + measurementToStringWithTime(m, timeFrame, timePeriod);
+			ret = ret + pastMeasurementToString(m, timePeriod);
 		}
-		return "Eredmenyek: \n" + ret;
+		String label = dayFormatLong.format(new Date(startTime));
+		return label + ", " + location + " : \n" + ret;
 	}
 
 	private static final void log(String string){

@@ -1,0 +1,26 @@
+Have to edit /ect/modules
+
+Add lines:
+i2c-bcm2708
+i2c-dev
+
+Then install tools:
+
+sudo apt-get install python-smbus
+sudo apt-get install i2c-tools
+
+Then comment out from (if file exists) /etc/modprobe.d/raspi-blacklist.conf lines:
+
+blacklist spi-bcm2708
+blacklist i2c-bcm2708
+
+Add user to i2c group (?):
+
+sudo adduser pi i2c
+
+After that, detecting devices:
+
+sudo i2cdetect -y 1 #or 0 for 256MB Raspberry B
+
+For details: 
+http://neophob.com/2013/04/i2c-communication-between-a-rpi-and-a-arduino/

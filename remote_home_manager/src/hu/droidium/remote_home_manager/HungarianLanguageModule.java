@@ -83,107 +83,111 @@ public class HungarianLanguageModule implements LanguageInterface {
 				}
 			}
 		}
-		Pattern pastPattern = Pattern.compile(QUESTION + "( volt | )" + SENSOR_TYPES + "( volt | )(.*) " + DATE + "\\?");
-		Matcher pastMatcher = pastPattern.matcher(message.toLowerCase());
-		if (pastMatcher.matches()) {
-			int groups = pastMatcher.groupCount();
-			if (groups == 6) {
-				String location = pastMatcher.group(5);
-				SensorType type = SENSOR_TYPE_HASH.get(pastMatcher.group(3));
-				log("PAST");
-				log("Sensor type: " + type);
-				log("Location: " + location);
-				log("Time: " + pastMatcher.group(6));
-				long[] limits = getTimeLimitsAndWindow(pastMatcher.group(6), time);
-				log("Processed time: " + toDate(limits));
-				List<Measurement> m;
-				if (limits[2] != -1) {
-					System.out.println("Limits with periond");
-					m = sensorDataStore.getMeasurementAverages(location, type, limits[0], limits[1], limits[2]);
+		Pattern firstPastPattern = Pattern.compile(QUESTION + "( volt | )" + SENSOR_TYPES + "( volt | )(.*) " + DATE + "\\?");
+		Matcher firstPastMatcher = firstPastPattern.matcher(message.toLowerCase());
+		Pattern	secondPastPattern = Pattern.compile(QUESTION + "( volt | )" + SENSOR_TYPES + "( volt | )" + DATE + " (.*)\\?");
+		Matcher secondPastMatcher = secondPastPattern.matcher(message.toLowerCase());
+		if (firstPastMatcher.matches() || secondPastMatcher.matches()) {
+			log("PAST");
+			String question = null;
+			String location = null;
+			SensorType type = null;
+			String queryTime = null;
+			boolean ok = false;
+			if (firstPastMatcher.matches()) {
+				if (firstPastMatcher.groupCount() == 6) {
+					System.out.println("First past pattern.");
+					question =  firstPastMatcher.group(1);
+					location = firstPastMatcher.group(5);
+					type = SENSOR_TYPE_HASH.get(firstPastMatcher.group(3));
+					queryTime = firstPastMatcher.group(6);
+					ok = true;
 				} else {
-					System.out.println("Limits without period");
-					m = sensorDataStore.getMeasurements(location, type, limits[0], limits[1]);
-				}
-				System.out.println("Found measurements " + m);
-				if (m == null || m.size() == 0) {
-					return "Nem tudom " + pastMatcher.group(1) + " volt " + pastMatcher.group(3) + " " + location + ".";
-				} else {
-					return measurementsToString(m);
+					System.out.println("First not 6 groups " + firstPastMatcher.groupCount());
 				}
 			}
-		}
-		pastPattern = Pattern.compile(QUESTION + "( volt | )" + SENSOR_TYPES + "( volt | )" + DATE + " (.*)\\?");
-		pastMatcher = pastPattern.matcher(message.toLowerCase());
-		if (pastMatcher.matches()) {
-			int groups = pastMatcher.groupCount();
-			if (groups == 6) {
-				String location = pastMatcher.group(6);
-				SensorType type = SENSOR_TYPE_HASH.get(pastMatcher.group(3));
-				log("PAST");
+			if (secondPastMatcher.matches()){
+				if (secondPastMatcher.groupCount() == 6) {
+					System.out.println("Second past pattern.");
+					question =  secondPastMatcher.group(1);
+					location = secondPastMatcher.group(6);
+					type = SENSOR_TYPE_HASH.get(secondPastMatcher.group(3));
+					queryTime = secondPastMatcher.group(5);
+					ok = true;
+				} else {
+					System.out.println("Second not 6 groups " + firstPastMatcher.groupCount());
+				}
+			}
+			if (ok) {
 				log("Sensor type: " + type);
 				log("Location: " + location);
-				log("Time: " + pastMatcher.group(5));
-				long[] limits = getTimeLimitsAndWindow(pastMatcher.group(5), time);
-				log("Processed time: " + toDate(limits));
+				log("Time: " + queryTime);
+				TimeLimitsAndWindow limits = getTimeLimitsAndWindow(queryTime, time);
+				log("Processed time: " + limitsToReadableString(limits));
 				List<Measurement> m;
-				if (limits[2] != -1) {
+				if (limits.getPeriod() != -1) {
 					System.out.println("Limits with periond");
-					m = sensorDataStore.getMeasurementAverages(location, type, limits[0], limits[1], limits[2]);
+					m = sensorDataStore.getMeasurementAverages(location, type, limits.getStart(), limits.getEnd(), limits.getPeriod());
 				} else {
 					System.out.println("Limits without period");
-					m = sensorDataStore.getMeasurements(location, type, limits[0], limits[1]);
+					m = sensorDataStore.getMeasurements(location, type, limits.getStart(), limits.getEnd());
 				}
 				System.out.println("Found measurements " + m);
 				if (m == null || m.size() == 0) {
-					return "Nem tudom " + pastMatcher.group(1) + " volt " + pastMatcher.group(3) + " " + location + ".";
+					return "Nem tudom " + question + " volt " + type + " " + location + ".";
 				} else {
-					return measurementsToString(m);
+					return measurementsToString(m, TimeFrame.DAY, TimePeriod.HOUR); // TODO adjust time period
 				}
 			}
 		}
 		return null;
 	}
 	
-	private static final String toDate(long[] limits) {
+	/**
+	 * 
+	 * @param limits
+	 * @return
+	 */
+	private static final String limitsToReadableString(TimeLimitsAndWindow limits) {
 		SimpleDateFormat format = new SimpleDateFormat("YYYY/MM/dd HH:mm");
-		String ret = format.format(new Date(limits[0]));
-		ret = ret + " - " + format.format(new Date(limits[1]));
-		if (limits[2] != -1) {
-			int secs = (int)(limits[2] / 1000);
+		String ret = format.format(new Date(limits.getStart()));
+		ret = ret + " - " + format.format(new Date(limits.getEnd()));
+		if (limits.getPeriod() != null) {
+			int secs = (int)(limits.getPeriod() / 1000);
 			ret = ret + " period: " + secs / 3600 + ":" + ((secs % 60 < 10)?"0":"") + secs % 60;
 		}
 		return ret;
 	}
 
-	private static final long[] getTimeLimitsAndWindow(String date, long time) {
+	private static final TimeLimitsAndWindow getTimeLimitsAndWindow(String date, long time) {
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTimeInMillis(time);
-		long[] ret = new long[3];
+		TimeLimitsAndWindow limits = new TimeLimitsAndWindow();
 		if (date.equals("ma")) {
-			ret[1] = calendar.getTimeInMillis();
+			limits.setEnd( calendar.getTimeInMillis());
 			Utils.stripToDayStart(calendar);
-			ret[0] = calendar.getTimeInMillis();
-			ret[2] = Utils.HOUR_MILLIS;
+			limits.setStart(calendar.getTimeInMillis());
+			limits.setPeriod(TimePeriod.HOUR);
 		} else if (date.equals("tegnap")) {
 			Utils.stripToDayStart(calendar);
-			ret[0] = calendar.getTimeInMillis() - Utils.DAY_MILLIS;
-			ret[1] = calendar.getTimeInMillis();
-			ret[2] = Utils.HOUR_MILLIS;
+			limits.setStart(calendar.getTimeInMillis() - Utils.DAY_MILLIS);
+			limits.setEnd(calendar.getTimeInMillis());
+			limits.setPeriod(TimePeriod.HOUR);
 		} else if (date.equals("tegnapelőtt")) {
 			Utils.stripToDayStart(calendar);
-			ret[0] = calendar.getTimeInMillis() - Utils.DAY_MILLIS * 2;
-			ret[1] = calendar.getTimeInMillis() - Utils.DAY_MILLIS;
-			ret[2] = Utils.HOUR_MILLIS;
+			limits.setStart(calendar.getTimeInMillis() - Utils.DAY_MILLIS * 2);
+			limits.setEnd(calendar.getTimeInMillis() - Utils.DAY_MILLIS);
+			limits.setPeriod(TimePeriod.HOUR);
 		} else if (date.equals("a hét")) {
-			ret[1] = calendar.getTimeInMillis();
+			limits.setEnd(calendar.getTimeInMillis());
 			Utils.stripToWeekStart(calendar);
-			ret[0] = calendar.getTimeInMillis();
-			ret[2] = Utils.DAY_MILLIS;
+			limits.setStart(calendar.getTimeInMillis());
+			limits.setPeriod(TimePeriod.DAY);
 		} else if (date.equals("a múlt hét") || date.equals("múlt hét")) {
 			Utils.stripToWeekStart(calendar);
-			ret[0] = calendar.getTimeInMillis() - Utils.DAY_MILLIS * 7;
-			ret[1] = calendar.getTimeInMillis();
-			ret[2] = Utils.DAY_MILLIS;
+			limits.setStart(calendar.getTimeInMillis() - Utils.DAY_MILLIS * 7);
+			limits.setEnd(calendar.getTimeInMillis());
+			limits.setPeriod(TimePeriod.DAY);
 		} else if (date.equals("hétfő")) {
 			return getLimitsForDayOfWeek(calendar, 0);
 		} else if (date.equals("kedd")) {
@@ -207,9 +211,9 @@ public class HungarianLanguageModule implements LanguageInterface {
 			calendar.set(Calendar.YEAR, year);
 			calendar.set(Calendar.MONTH, month);
 			calendar.set(Calendar.DAY_OF_MONTH, day);
-			ret[0] = calendar.getTimeInMillis();
-			ret[1] = calendar.getTimeInMillis() + Utils.DAY_MILLIS;
-			ret[2] = Utils.HOUR_MILLIS;
+			limits.setStart(calendar.getTimeInMillis());
+			limits.setEnd(calendar.getTimeInMillis() + Utils.DAY_MILLIS);
+			limits.setPeriod(TimePeriod.HOUR);
 		} else if (date.matches(SHORT_TIME_PATTERN)) {
 			int hour = calendar.get(Calendar.HOUR_OF_DAY);
 			if (hour < Integer.parseInt(date)) {
@@ -219,9 +223,9 @@ public class HungarianLanguageModule implements LanguageInterface {
 			calendar.set(Calendar.MINUTE, 0);
 			calendar.set(Calendar.SECOND, 0);
 			calendar.set(Calendar.MILLISECOND, 0);
-			ret[0] = calendar.getTimeInMillis() - Utils.HOUR_MILLIS / 2;
-			ret[1] = calendar.getTimeInMillis() + Utils.HOUR_MILLIS / 2;
-			ret[2] = -1;
+			limits.setStart(calendar.getTimeInMillis() - Utils.HOUR_MILLIS / 2);
+			limits.setEnd(calendar.getTimeInMillis() + Utils.HOUR_MILLIS / 2);
+			limits.setPeriod(null);
 		} else if (date.matches(TIME_PATTERN)) {
 			int hour = calendar.get(Calendar.HOUR_OF_DAY);
 			int minute = calendar.get(Calendar.MINUTE);
@@ -235,43 +239,46 @@ public class HungarianLanguageModule implements LanguageInterface {
 			}
 			calendar.set(Calendar.HOUR_OF_DAY, requestedHour);
 			calendar.set(Calendar.MINUTE, requestedMinute);
-			ret[0] = calendar.getTimeInMillis() - Utils.HOUR_MILLIS / 8;
-			ret[1] = calendar.getTimeInMillis() + Utils.HOUR_MILLIS / 8;
-			ret[2] = -1;
+			limits.setStart(calendar.getTimeInMillis() - Utils.HOUR_MILLIS / 8);
+			limits.setEnd(calendar.getTimeInMillis() + Utils.HOUR_MILLIS / 8);
+			limits.setPeriod(null);
 		}
-		return ret;
+		return limits;
 	}
 	
-	private static final long[] getLimitsForDayOfWeek(Calendar calendar, int dayIndex) {
-		long[] ret = new long[3];
+	private static final TimeLimitsAndWindow getLimitsForDayOfWeek(Calendar calendar, int dayIndex) {
+		TimeLimitsAndWindow limits = new TimeLimitsAndWindow();
 		int currentDay = Utils.getDayOfWeekIndex(calendar);
 		if (currentDay > dayIndex) { // This week
 			Utils.stripToWeekStart(calendar);
-			ret[0] = calendar.getTimeInMillis() + dayIndex * Utils.DAY_MILLIS;
-			ret[1] = calendar.getTimeInMillis() + (dayIndex + 1) * Utils.DAY_MILLIS;
-			ret[2] = Utils.HOUR_MILLIS;
+			limits.setStart(calendar.getTimeInMillis() + dayIndex * Utils.DAY_MILLIS);
+			limits.setEnd(calendar.getTimeInMillis() + (dayIndex + 1) * Utils.DAY_MILLIS);
 		} else { // Last week
 			Utils.stripToWeekStart(calendar);
-			ret[0] = calendar.getTimeInMillis() - (7 - dayIndex) * Utils.DAY_MILLIS;
-			ret[1] = calendar.getTimeInMillis() - (6 - dayIndex) * Utils.DAY_MILLIS;
-			ret[2] = Utils.HOUR_MILLIS;
+			limits.setStart(calendar.getTimeInMillis() - (7 - dayIndex) * Utils.DAY_MILLIS);
+			limits.setEnd(calendar.getTimeInMillis() - (6 - dayIndex) * Utils.DAY_MILLIS);
 		}
-		return ret;
+		limits.setPeriod(TimePeriod.HOUR);
+		return limits;
 	}
 
 	private static String measurementToString(Measurement m) {
 		return m.getLocation() + " " + m.getValue() + " fok van.";
 	}
-	
-	private static String measurementsToString(List<Measurement> ms) {
+
+	private static String measurementToStringWithTime(Measurement m, TimeFrame timeFrame, TimePeriod timePeriod) {
+		return m.getLocation() + " " + m.getValue() + " fok van.";
+	}
+
+	private static String measurementsToString(List<Measurement> ms, TimeFrame timeFrame, TimePeriod timePeriod) {
 		String ret = "";
 		for (Measurement m : ms) {
 			if (ret.length() > 0) {
 				ret = ret + "\n";
 			}
-			ret = ret + measurementToString(m);
+			ret = ret + measurementToStringWithTime(m, timeFrame, timePeriod);
 		}
-		return "Eredmenyek: " + ret;
+		return "Eredmenyek: \n" + ret;
 	}
 
 	private static final void log(String string){

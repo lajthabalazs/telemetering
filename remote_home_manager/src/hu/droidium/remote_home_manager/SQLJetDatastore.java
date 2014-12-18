@@ -213,7 +213,9 @@ public class SQLJetDatastore extends DatastoreBase {
 				for (Measurement measurement : measurements) {
 					total = total + measurement.getValue();
 				}
-				ret.add(new Measurement(location, type, (long)(total / measurements.size()), (startTime + endTime) / 2));
+				long time = (startTime + endTime) / 2;
+				long value = (long)(total / measurements.size());
+				ret.add(new Measurement(location, type, time , value));
 			} else {
 				ret.add(null);
 			}

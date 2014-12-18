@@ -1,12 +1,12 @@
 package hu.droidium.remote_home_manager.runner;
 
+import hu.droidium.remote_home_manager.GUIClient;
 import hu.droidium.remote_home_manager.HungarianLanguageModule;
 import hu.droidium.remote_home_manager.RaspberryTemperatureSensor;
 import hu.droidium.remote_home_manager.SQLJetDatastore;
 import hu.droidium.telemetering.interfaces.LanguageInterface;
 import hu.droidium.telemetering.interfaces.SensorType;
 import main.TelemeteringIRCClient;
-import main.TelemeteringIRCListener;
 
 public class LovasRaspberrySingleNode extends SQLJetDatastore{
 	
@@ -72,7 +72,10 @@ public class LovasRaspberrySingleNode extends SQLJetDatastore{
 		LovasRaspberrySingleNode node = new LovasRaspberrySingleNode(databaseFile, demoMode);
 		node.run();		
 		LanguageInterface languageInterface = new HungarianLanguageModule(node);
-		TelemeteringIRCListener listener = new TelemeteringIRCListener(languageInterface);
-		new TelemeteringIRCClient(userName, chatServer, port, chatRoom, listener);
+		if (!demoMode) {
+			new TelemeteringIRCClient(userName, chatServer, port, chatRoom, languageInterface);
+		} else {
+			new GUIClient(languageInterface);
+		}
 	}
 }

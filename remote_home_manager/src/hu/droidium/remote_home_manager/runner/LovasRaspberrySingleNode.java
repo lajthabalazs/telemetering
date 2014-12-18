@@ -32,9 +32,9 @@ public class LovasRaspberrySingleNode extends SQLJetDatastore{
 					System.out.println("Measuring...");
 					long temp;
 					if (demoMode) {
-						temp = (long) (Math.random() * 10 + 15);
+						temp = (long) (Math.random() * 10000 + 15000);
 					} else {
-						temp = RaspberryTemperatureSensor.measure() / 1000;
+						temp = RaspberryTemperatureSensor.measure();
 					}
 					saveMeasurement(locations[0], SensorType.TEMPERATURE, System.currentTimeMillis(), temp);
 					try {

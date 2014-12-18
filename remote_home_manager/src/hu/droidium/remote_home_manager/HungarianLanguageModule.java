@@ -17,6 +17,7 @@ public class HungarianLanguageModule implements LanguageInterface {
 
 	// Formats for lines
 	public static final SimpleDateFormat timestampFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+	public static final SimpleDateFormat minuteFormat = new SimpleDateFormat("HH:mm");
 	public static final SimpleDateFormat halfHourFormat = new SimpleDateFormat("dd. HH:mm");
 	public static final SimpleDateFormat hourFormat = new SimpleDateFormat("MM/dd HH'h'");
 	public static final SimpleDateFormat dayFormatLong = new SimpleDateFormat("yyyy/MM/dd");
@@ -240,7 +241,7 @@ public class HungarianLanguageModule implements LanguageInterface {
 			calendar.set(Calendar.MILLISECOND, 0);
 			limits.setStart(calendar.getTimeInMillis() - Utils.HOUR_MILLIS / 2);
 			limits.setEnd(calendar.getTimeInMillis() + Utils.HOUR_MILLIS / 2);
-			limits.setPeriod(null);
+			limits.setPeriod(TimePeriod.FIVE_MINUTE);
 		} else if (date.matches(TIME_PATTERN)) {
 			int hour = calendar.get(Calendar.HOUR_OF_DAY);
 			int minute = calendar.get(Calendar.MINUTE);
@@ -256,7 +257,7 @@ public class HungarianLanguageModule implements LanguageInterface {
 			calendar.set(Calendar.MINUTE, requestedMinute);
 			limits.setStart(calendar.getTimeInMillis() - Utils.HOUR_MILLIS / 8);
 			limits.setEnd(calendar.getTimeInMillis() + Utils.HOUR_MILLIS / 8);
-			limits.setPeriod(null);
+			limits.setPeriod(TimePeriod.MINUTE);
 		}
 		return limits;
 	}
@@ -278,23 +279,25 @@ public class HungarianLanguageModule implements LanguageInterface {
 	}
 
 	private static String presentMeasurementToString(Measurement m) {
-		return m.getLocation() + " " + m.getValue() + " fok van.";
+		return m.getLocation() + " " + m.getValueString() + " fok van.";
 	}
 
 	private static String pastMeasurementToString(Measurement m, TimePeriod timePeriod) {
 		if (timePeriod != null) {
 			switch(timePeriod) {
+			case MINUTE: case FIVE_MINUTE:
+				return minuteFormat.format(new Date(m.getTime())) + " " + m.getValueString() + " C";
 			case HALF_HOUR:
-				return halfHourFormat.format(new Date(m.getTime())) + " " + m.getValue() + " C";
+				return halfHourFormat.format(new Date(m.getTime())) + " " + m.getValueString() + " C";
 			case HOUR:
-				return hourFormat.format(new Date(m.getTime())) + " " + m.getValue() + " C";
+				return hourFormat.format(new Date(m.getTime())) + " " + m.getValueString() + " C";
 			case DAY:
-				return dayFormat.format(new Date(m.getTime())) + " " + m.getValue() + " C";
+				return dayFormat.format(new Date(m.getTime())) + " " + m.getValueString() + " C";
 			case WEEK:
-				return weeFormat.format(new Date(m.getTime())) + " " + m.getValue() + " C";
+				return weeFormat.format(new Date(m.getTime())) + " " + m.getValueString() + " C";
 			}
 		}
-		return m.getLocation() + " " + timestampFormat.format(new Date(m.getTime())) + " " + m.getValue() + " fok volt.";
+		return m.getLocation() + " " + timestampFormat.format(new Date(m.getTime())) + " " + m.getValueString() + " fok volt.";
 	}
 
 	private static String measurementsToString(List<Measurement> ms, String location, long startTime, TimeFrame timeFrame, TimePeriod timePeriod) {

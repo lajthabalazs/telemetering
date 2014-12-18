@@ -17,7 +17,17 @@ public class Measurement {
 	public long getValue() {
 		return value;
 	}
-	
+
+	public String getValueString() {
+		String ret = "" + value / 1000 + ".";
+		long rest = (value / 10) % 100;
+		if (rest < 10) {
+			ret = ret + "0";
+		}
+		 ret = ret + rest;
+		return ret;
+	}
+
 	public String getLocation(){
 		return location;
 	}

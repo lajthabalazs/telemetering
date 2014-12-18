@@ -1,5 +1,8 @@
 package hu.droidium.remote_home_manager;
 
+import hu.droidium.telemetering.interfaces.Measurement;
+import hu.droidium.telemetering.interfaces.SensorType;
+
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,7 +13,7 @@ import org.tmatesoft.sqljet.core.table.ISqlJetCursor;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 
-public class SQLJetDatastore extends SensorBase {
+public class SQLJetDatastore extends DatastoreBase {
 	
 	private static final String MEASUREMENT_TABLE = "measurement";
 
@@ -85,9 +88,9 @@ public class SQLJetDatastore extends SensorBase {
 			db = SqlJetDb.open(dbFile, true);
 			db.beginTransaction(SqlJetTransactionMode.WRITE);
 			ISqlJetTable table = db.getTable(MEASUREMENT_TABLE);
-			table.insert(time, getSensorId(type, location), value);
+			long result = table.insert(time, getSensorId(type, location), value);
+			System.out.println("Result of insert " + result);			
 			db.commit();
-			db.close();
 			return true;
 		} catch (SqlJetException e) {
 			e.printStackTrace();
@@ -96,12 +99,13 @@ public class SQLJetDatastore extends SensorBase {
 			} catch (SqlJetException e1) {
 				e1.printStackTrace();
 			}
+			return false;
+		} finally {
 			try {
 				db.close();
 			} catch (SqlJetException e1) {
 				e1.printStackTrace();
 			}
-			return false;
 		}
 	}
 	
@@ -120,7 +124,6 @@ public class SQLJetDatastore extends SensorBase {
 				}
 			}
 			db.commit();
-			db.close();
 			return true;
 		} catch (SqlJetException e) {
 			e.printStackTrace();
@@ -129,12 +132,13 @@ public class SQLJetDatastore extends SensorBase {
 			} catch (SqlJetException e1) {
 				e1.printStackTrace();
 			}
+			return false;
+		} finally {
 			try {
 				db.close();
 			} catch (SqlJetException e1) {
 				e1.printStackTrace();
 			}
-			return false;
 		}
 	}
 	
@@ -158,16 +162,11 @@ public class SQLJetDatastore extends SensorBase {
 					
 				} while(cursor.next());
 			}
-			db.commit();
 			db.close();
 			return values;
 		} catch (SqlJetException e) {
 			e.printStackTrace();
-			try {
-				db.rollback();
-			} catch (SqlJetException e1) {
-				e1.printStackTrace();
-			}
+		} finally {
 			try {
 				db.close();
 			} catch (SqlJetException e1) {
@@ -190,15 +189,10 @@ public class SQLJetDatastore extends SensorBase {
 				Long value = cursor.getInteger(VALUE);
 				return new Measurement(location, type, time, value);
 			}
-			db.close();
 			return null;
 		} catch (SqlJetException e) {
 			e.printStackTrace();
-			try {
-				db.rollback();
-			} catch (SqlJetException e1) {
-				e1.printStackTrace();
-			}
+		} finally {
 			try {
 				db.close();
 			} catch (SqlJetException e1) {

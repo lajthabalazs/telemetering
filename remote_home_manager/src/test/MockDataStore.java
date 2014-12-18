@@ -3,11 +3,11 @@ package test;
 import java.util.LinkedList;
 import java.util.List;
 
-import hu.droidium.remote_home_manager.Measurement;
-import hu.droidium.remote_home_manager.SensorBase;
-import hu.droidium.remote_home_manager.SensorType;
+import hu.droidium.remote_home_manager.DatastoreBase;
+import hu.droidium.telemetering.interfaces.Measurement;
+import hu.droidium.telemetering.interfaces.SensorType;
 
-public class MockDataStore extends SensorBase {
+public class MockDataStore extends DatastoreBase {
 	
 	public enum Method {
 		GET_LAST_MEASUREMENT, GET_MEASUREMENTS, GET_AVERAGES

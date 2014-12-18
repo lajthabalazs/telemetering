@@ -1,5 +1,10 @@
 package hu.droidium.remote_home_manager;
 
+import hu.droidium.telemetering.interfaces.LanguageInterface;
+import hu.droidium.telemetering.interfaces.Measurement;
+import hu.droidium.telemetering.interfaces.DatastoreInterface;
+import hu.droidium.telemetering.interfaces.SensorType;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -44,9 +49,9 @@ public class HungarianLanguageModule implements LanguageInterface {
 		SENSOR_TYPE_TO_STRING_HASH.put(SensorType.MOVEMENT, "mozgás");
 		SENSOR_TYPE_TO_STRING_HASH.put(SensorType.MOVEMENT, "a mozgás");
 	}
-	private SensorInterface sensorDataStore;
+	private DatastoreInterface sensorDataStore;
 	
-	public HungarianLanguageModule( SensorInterface sensorDataStore) {
+	public HungarianLanguageModule( DatastoreInterface sensorDataStore) {
 		this.sensorDataStore = sensorDataStore;
 	}
 	
@@ -67,9 +72,10 @@ public class HungarianLanguageModule implements LanguageInterface {
 					log("ACTUAL");
 					log("Sensor type: " + type);
 					log("Location: " + location);
+					log("Time: Last measurement");
 					Measurement m = sensorDataStore.getLastMeasurement(location, type);
 					if (m != null) {
-						return m.toString();
+						return measurementToString(m);
 					} else {
 						return "Nem tudom " + currentMatcher.group(1) + " " + currentMatcher.group(3) + " van " + location + ".";
 					}
@@ -92,14 +98,17 @@ public class HungarianLanguageModule implements LanguageInterface {
 				log("Processed time: " + toDate(limits));
 				List<Measurement> m;
 				if (limits[2] != -1) {
+					System.out.println("Limits with periond");
 					m = sensorDataStore.getMeasurementAverages(location, type, limits[0], limits[1], limits[2]);
 				} else {
+					System.out.println("Limits without period");
 					m = sensorDataStore.getMeasurements(location, type, limits[0], limits[1]);
 				}
+				System.out.println("Found measurements " + m);
 				if (m == null || m.size() == 0) {
 					return "Nem tudom " + pastMatcher.group(1) + " volt " + pastMatcher.group(3) + " " + location + ".";
 				} else {
-					return m.toString();
+					return measurementsToString(m);
 				}
 			}
 		}
@@ -118,14 +127,17 @@ public class HungarianLanguageModule implements LanguageInterface {
 				log("Processed time: " + toDate(limits));
 				List<Measurement> m;
 				if (limits[2] != -1) {
+					System.out.println("Limits with periond");
 					m = sensorDataStore.getMeasurementAverages(location, type, limits[0], limits[1], limits[2]);
 				} else {
+					System.out.println("Limits without period");
 					m = sensorDataStore.getMeasurements(location, type, limits[0], limits[1]);
 				}
+				System.out.println("Found measurements " + m);
 				if (m == null || m.size() == 0) {
 					return "Nem tudom " + pastMatcher.group(1) + " volt " + pastMatcher.group(3) + " " + location + ".";
 				} else {
-					return m.toString();
+					return measurementsToString(m);
 				}
 			}
 		}
@@ -246,26 +258,22 @@ public class HungarianLanguageModule implements LanguageInterface {
 		}
 		return ret;
 	}
-	
-	public static void main(String[] args) {
-		SensorInterface sensors = new SQLJetDatastore("empty.sqlite");
-		HungarianLanguageModule module = new HungarianLanguageModule(sensors);
-		long now = System.currentTimeMillis();
-		log(">> " + module.getResponse("Milyen meleg van a nappaliban?", now));
-		log(">> " + module.getResponse("Mennyire van meleg a nappaliban?", now));
-		log(">> " + module.getResponse("Hány fok volt a nappaliban tegnap?", now));
-		log(">> " + module.getResponse("Hány fok volt tegnap a nappaliban?", now));
-		log(">> " + module.getResponse("Mennyire volt meleg tegnap a nappaliban?", now));
-		log(">> " + module.getResponse("Milyen volt az idő tegnap a nappaliban?", now));
-		log(">> " + module.getResponse("Mennyire volt hideg 2012.12.24-én a nappaliban?", now));
-		log(">> " + module.getResponse("Mennyire volt hideg 2012/12/24-án a nappaliban?", now));
-		log(">> " + module.getResponse("Mennyire volt hideg tegnap a nappaliban?", now));
-		log(">> " + module.getResponse("Mennyire volt hideg szerdán a nappaliban?", now));
-		log(">> " + module.getResponse("Mennyire volt hideg múlt héten a nappaliban?", now));
-		log(">> " + module.getResponse("Mennyire volt hideg 11-kor a nappaliban?", now));
-		log(">> " + module.getResponse("Mennyire volt hideg 11:15-kor a nappaliban?", now));
+
+	private static String measurementToString(Measurement m) {
+		return m.getLocation() + " " + m.getValue() + " fok van.";
 	}
 	
+	private static String measurementsToString(List<Measurement> ms) {
+		String ret = "";
+		for (Measurement m : ms) {
+			if (ret.length() > 0) {
+				ret = ret + "\n";
+			}
+			ret = ret + measurementToString(m);
+		}
+		return "Eredmenyek: " + ret;
+	}
+
 	private static final void log(String string){
 		System.out.println(string);
 	}

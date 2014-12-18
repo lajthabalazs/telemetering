@@ -2,7 +2,7 @@ package test;
 
 import static org.junit.Assert.assertEquals;
 import hu.droidium.remote_home_manager.HungarianLanguageModule;
-import hu.droidium.remote_home_manager.SensorType;
+import hu.droidium.telemetering.interfaces.SensorType;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -34,6 +34,7 @@ public class TestHungarian {
 		calendar.set(Calendar.SECOND, 55);
 		return calendar;
 	}
+	
 	@Test
 	public void testPresent() {
 		Calendar calendar = getCalendar();

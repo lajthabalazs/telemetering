@@ -1,10 +1,14 @@
 package hu.droidium.remote_home_manager;
 
+import hu.droidium.telemetering.interfaces.Measurement;
+import hu.droidium.telemetering.interfaces.DatastoreInterface;
+import hu.droidium.telemetering.interfaces.SensorType;
+
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 
-public abstract class SensorBase implements SensorInterface {
+public abstract class DatastoreBase implements DatastoreInterface {
 	
 	private static final long HOUR_MILLIS = 3600000l;
 	

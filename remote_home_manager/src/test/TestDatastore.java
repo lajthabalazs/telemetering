@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Random;
 
 import hu.droidium.remote_home_manager.SQLJetDatastore;
-import hu.droidium.remote_home_manager.Measurement;
-import hu.droidium.remote_home_manager.SensorType;
+import hu.droidium.telemetering.interfaces.Measurement;
+import hu.droidium.telemetering.interfaces.SensorType;
 
 import org.junit.After;
 import org.junit.Before;
@@ -65,8 +65,8 @@ public class TestDatastore {
 		Iterator<Measurement> toInsertIterator = toInsert.iterator();
 		int i = 0;
 		for (Measurement m : result) {
-			if (i++ % 1000 == 0) {
-				System.out.println("Testing " + i);
+			if (i % 1000 == 0) {
+				System.out.println("Testing " + i++);
 			}
 			Measurement inserted = toInsertIterator.next();
 			assertEquals(inserted.getLocation(), m.getLocation());

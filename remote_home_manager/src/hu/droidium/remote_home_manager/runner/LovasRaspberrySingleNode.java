@@ -15,6 +15,7 @@ public class LovasRaspberrySingleNode extends SQLJetDatastore{
 	
 	public LovasRaspberrySingleNode(String databaseFile, boolean demoMode) {
 		super(databaseFile);
+		System.out.println("Constructor run.");
 		this.demoMode = demoMode;
 	}
 	
@@ -55,7 +56,9 @@ public class LovasRaspberrySingleNode extends SQLJetDatastore{
 		String chatRoom;
 		boolean demoMode;
 		boolean ui;
+		System.out.println("Received " + args.length + " parameters.");
 		if (args.length == 6) {
+			System.out.println("Extracting parameters...");
 			databaseFile = args[0];
 			userName = args[1];
 			chatServer = args[2];
@@ -64,6 +67,7 @@ public class LovasRaspberrySingleNode extends SQLJetDatastore{
 			demoMode = Boolean.parseBoolean(args[5]);
 			ui = false;
 		} else {
+			System.out.println("Using built in parameters...");
 			databaseFile = "temp.sqlite";
 			userName = "lovas_telemetering_client";
 			chatServer = "irc.chatjunkies.org";
@@ -72,10 +76,30 @@ public class LovasRaspberrySingleNode extends SQLJetDatastore{
 			demoMode = true;
 			ui = true;
 		}
+		System.out.println("Database " + databaseFile);
+		System.out.println("User " + userName);
+		System.out.println("Chat server " + chatServer);
+		System.out.println("Port " + port);
+		System.out.println("Chat room " + chatRoom);
+		System.out.println("Demo mode " + demoMode);
+
 		LovasRaspberrySingleNode node = new LovasRaspberrySingleNode(databaseFile, demoMode);
 		node.run();		
 		LanguageInterface languageInterface = new HungarianLanguageModule(node);
-		new TelemeteringIRCClient(userName, chatServer, port, chatRoom, languageInterface);
+		while (true) {
+			try {
+				new TelemeteringIRCClient(userName, chatServer, port, chatRoom, languageInterface);
+				break;
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println("Error " + e);
+			}
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 		if (ui) {
 			new GUIClient(languageInterface);
 		}

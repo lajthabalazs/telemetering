@@ -2,16 +2,14 @@ package main;
 
 import hu.droidium.telemetering.interfaces.LanguageInterface;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 
 import org.pircbotx.Configuration.Builder;
 import org.pircbotx.PircBotX;
-import org.pircbotx.exception.IrcException;
 
 public class TelemeteringIRCClient {
 	
-	public TelemeteringIRCClient(String name, String server, int serverPort, String channel, LanguageInterface languageInterface) {
+	public TelemeteringIRCClient(String name, String server, int serverPort, String channel, LanguageInterface languageInterface) throws Exception {
 		Builder<PircBotX> builder = new Builder<PircBotX>();
 		builder.setName(name);
 		builder.setRealName(name);
@@ -28,10 +26,6 @@ public class TelemeteringIRCClient {
 		builder.addListener(listener);
 		PircBotX bot = new PircBotX(builder.buildConfiguration());
 		System.out.println("Encoding : " + bot.getConfiguration().getEncoding());
-		try {
-			bot.startBot();
-		} catch (IOException | IrcException e) {
-			e.printStackTrace();
-		}
+		bot.startBot();
 	}	
 }

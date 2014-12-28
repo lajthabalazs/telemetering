@@ -4,7 +4,6 @@ import hu.droidium.telemetering.interfaces.Measurement;
 import hu.droidium.telemetering.interfaces.SensorType;
 
 import java.io.File;
-import java.time.Period;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;

@@ -29,7 +29,7 @@ public abstract class DatastoreBase implements DatastoreInterface {
 		return getMeasurements(location, type, startTime, endTime);
 	}
 	
-	private long[] getLastHoursLimits() {
+	public static long[] getLastHoursLimits() {
 		Calendar calendar = Calendar.getInstance();
 		calendar.set(Calendar.MILLISECOND, 0);
 		calendar.set(Calendar.SECOND, 0);
@@ -39,7 +39,7 @@ public abstract class DatastoreBase implements DatastoreInterface {
 		return new long[] {startTime, endTime};
 	}
 	
-	private long[] getLastDaysLimits() {
+	public static long[] getLastDaysLimits() {
 		Calendar calendar = Calendar.getInstance();
 		calendar.set(Calendar.MILLISECOND, 0);
 		calendar.set(Calendar.SECOND, 0);
@@ -50,7 +50,7 @@ public abstract class DatastoreBase implements DatastoreInterface {
 		return new long[] {startTime, endTime};
 	}
 
-	private long[] getLastWeeksLimits() {
+	public static long[] getLastWeeksLimits() {
 		Calendar calendar = Calendar.getInstance();
 		calendar.set(Calendar.MILLISECOND, 0);
 		calendar.set(Calendar.SECOND, 0);
@@ -92,7 +92,7 @@ public abstract class DatastoreBase implements DatastoreInterface {
 		return new long[] {startTime, endTime};
 	}
 
-	private long[] getLastMonthsLimits() {
+	public static long[] getLastMonthsLimits() {
 		Calendar calendar = Calendar.getInstance();
 		calendar.set(Calendar.MILLISECOND, 0);
 		calendar.set(Calendar.SECOND, 0);
@@ -113,45 +113,25 @@ public abstract class DatastoreBase implements DatastoreInterface {
 	@Override
 	public Measurement getLastHoursAverage(String location, SensorType type) {
 		long[] limits = getLastHoursLimits();
-		List<Measurement> measurements = getMeasurements(location, type, limits[0], limits[1]);
-		double total = 0;
-		for (Measurement measurement : measurements) {
-			total = total + measurement.getValue();
-		}
-		return new Measurement(location, type, (long)(total / measurements.size()), (limits[0] + limits[1] ) / 2);
+		return getMeasurementAverage(location, type, limits[0], limits[1]);
 	}
 
 	@Override
 	public Measurement getLastDaysAverage(String location, SensorType type) {
 		long[] limits = getLastDaysLimits();
-		List<Measurement> measurements = getMeasurements(location, type, limits[0], limits[1]);
-		double total = 0;
-		for (Measurement measurement : measurements) {
-			total = total + measurement.getValue();
-		}
-		return new Measurement(location, type, (long)(total / measurements.size()), (limits[0] + limits[1]) / 2);
+		return getMeasurementAverage(location, type, limits[0], limits[1]);
 	}
 
 	@Override
 	public Measurement getLastWeeksAverage(String location, SensorType type) {
 		long[] limits = getLastWeeksLimits();
-		List<Measurement> measurements = getMeasurements(location, type, limits[0], limits[1]);
-		double total = 0;
-		for (Measurement measurement : measurements) {
-			total = total + measurement.getValue();
-		}
-		return new Measurement(location, type, (long)(total / measurements.size()), (limits[0] + limits[1]) / 2);
+		return getMeasurementAverage(location, type, limits[0], limits[1]);
 	}
 
 	@Override
 	public Measurement getLastMonthsAverage(String location, SensorType type) {
 		long[] limits = getLastMonthsLimits();
-		List<Measurement> measurements = getMeasurements(location, type, limits[0], limits[1]);
-		double total = 0;
-		for (Measurement measurement : measurements) {
-			total = total + measurement.getValue();
-		}
-		return new Measurement(location, type, (long)(total / measurements.size()), (limits[0] + limits[1]) / 2);
+		return getMeasurementAverage(location, type, limits[0], limits[1]);
 	}
 
 	@Override
@@ -171,26 +151,30 @@ public abstract class DatastoreBase implements DatastoreInterface {
 		long[] limits = getLastMonthsLimits();
 		return getMeasurementAverages(location, type, limits[0], limits[1], 24 * HOUR_MILLIS);
 	}
-
+	
 	@Override
 	public List<Measurement> getMeasurementAverages(String location, SensorType type,
 			long startTime, long endTime, long window) {
 		List<Measurement> ret = new LinkedList<Measurement>();
 		for (; startTime < endTime; startTime += window) {
-			List<Measurement> measurements = getMeasurements(location, type, startTime, endTime);
-			if (measurements != null && measurements.size() > 0) {
-				double total = 0;
-				for (Measurement measurement : measurements) {
-					total = total + measurement.getValue();
-				}
-				long time = (startTime + endTime) / 2;
-				long value = (long)(total / measurements.size());
-				ret.add(new Measurement(location, type, time, value));
-			} else {
-				ret.add(null);
-			}
+			ret.add(getMeasurementAverage(location, type, startTime, startTime + window));
 		}
 		return ret;
+	}
+
+
+	@Override
+	public Measurement getMeasurementAverage(String location, SensorType type, long startTime, long endTime) {
+		List<Measurement> measurements = getMeasurements(location, type, startTime, endTime);
+		if (measurements.size() > 0) {
+			long total = 0;
+			for (Measurement measurement : measurements) {
+				total = total + measurement.getValue();
+			}
+			return new Measurement(location, type, startTime, total / measurements.size());
+		} else {
+			return null;
+		}
 	}
 
 	@Override

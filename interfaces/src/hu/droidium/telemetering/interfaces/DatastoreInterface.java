@@ -21,7 +21,9 @@ public interface DatastoreInterface {
 	public List<Measurement> getLastDayByHours(String location, SensorType type);
 	public List<Measurement> getLastWeekByDays(String location, SensorType type);
 	public List<Measurement> getLastMonthByDays(String location, SensorType type);
+	
 	public List<Measurement> getMeasurementAverages(String location, SensorType type, long startTime, long endTime, long window);
+	public Measurement getMeasurementAverage(String location, SensorType type, long startTime, long endTime);
 
 	public Measurement getLastHoursMaximum(String location, SensorType type);
 	public Measurement getLastHoursMinimum(String location, SensorType type);

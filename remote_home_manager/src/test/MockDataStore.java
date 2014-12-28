@@ -63,14 +63,20 @@ public class MockDataStore extends DatastoreBase {
 		calls.add(new Call(Method.GET_LAST_MEASUREMENT, location, type));
 		return null;
 	}
-	
+
 	@Override
-	public List<Measurement> getMeasurementAverages(String location,
-			SensorType type, long startTime, long endTime, long window) {
+	public List<Measurement> getMeasurementAverages(String location, SensorType type, long startTime, long endTime,
+			long window) {
 		calls.add(new Call(Method.GET_AVERAGES, location, type, startTime, endTime, window));
 		return null;
 	}
 	
+	@Override
+	public Measurement getMeasurementAverage(String location, SensorType type, long startTime, long endTime) {
+		calls.add(new Call(Method.GET_AVERAGES, location, type, startTime, endTime));
+		return null;
+	}
+
 	@Override
 	public List<Measurement> getMeasurements(String location, SensorType type,
 			long startTime, long endTime) {

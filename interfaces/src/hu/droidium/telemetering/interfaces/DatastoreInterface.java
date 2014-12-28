@@ -4,7 +4,7 @@ import java.util.List;
 
 public interface DatastoreInterface {
 	
-	public String[] getLocations();
+	public List<String> getLocations();
 	
 	public boolean saveMeasurement(String location, SensorType type, long time, long value);
 	public boolean bulkInster(List<Measurement> measurements);

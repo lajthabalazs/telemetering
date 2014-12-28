@@ -13,12 +13,6 @@ public abstract class DatastoreBase implements DatastoreInterface {
 	private static final long HOUR_MILLIS = 3600000l;
 	
 	@Override
-	public String[] getLocations() {
-		return null;
-	}		
-	
-
-	@Override
 	public List<Measurement> getLastHoursMeasurements(String location, SensorType type) {
 		Calendar calendar = Calendar.getInstance();
 		calendar.set(Calendar.MILLISECOND, 0);

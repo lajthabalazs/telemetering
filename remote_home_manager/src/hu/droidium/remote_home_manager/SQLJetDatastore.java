@@ -79,7 +79,7 @@ public class SQLJetDatastore extends DatastoreBase {
 	}
 	
 	@Override
-	public String[] getLocations() {
+	public List<String> getLocations() {
 		return null;
 	}
 	

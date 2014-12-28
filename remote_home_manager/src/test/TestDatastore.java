@@ -2,55 +2,29 @@ package test;
 
 import static org.junit.Assert.*;
 
-import java.io.File;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import hu.droidium.remote_home_manager.SQLJetDatastore;
+import hu.droidium.telemetering.interfaces.DatastoreInterface;
 import hu.droidium.telemetering.interfaces.Measurement;
 import hu.droidium.telemetering.interfaces.SensorType;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-public class TestDatastore {
-
-	private static final String TEST_DATASTORE_FILE = "test_datastore.sqlite";
-	@Before
-	public void init() {
-		File file = new File(TEST_DATASTORE_FILE);
-		if (file.exists()) {
-			file.delete();
-		}
-	}
+public abstract class TestDatastore {
 	
-	@After
-	public void destroy() {
-		File file = new File(TEST_DATASTORE_FILE);
-		if (file.exists()) {
-			file.delete();
-		}
-	}
-	
-	@Test
-	public void testDatastoreInit() {
-		new SQLJetDatastore(TEST_DATASTORE_FILE);
-		assertTrue(new File(TEST_DATASTORE_FILE).exists());
-	}
+	DatastoreInterface datastore;
 
 	@Test
 	public void testDatastoreWrite() {
-		SQLJetDatastore datastore = new SQLJetDatastore(TEST_DATASTORE_FILE);
 		boolean save = datastore.saveMeasurement("sarok", SensorType.TEMPERATURE, 123241231l, 35);
 		assertTrue(save);
 	}
 
 	@Test
 	public void testGetMeasurements() {
-		SQLJetDatastore datastore = new SQLJetDatastore(TEST_DATASTORE_FILE);
 		long startTime = System.currentTimeMillis();
 		Random random = new Random();
 		List<Measurement> toInsert = new LinkedList<Measurement>();
@@ -64,10 +38,12 @@ public class TestDatastore {
 		assertEquals(toInsert.size(), result.size());
 		Iterator<Measurement> toInsertIterator = toInsert.iterator();
 		int i = 0;
+		System.out.println("Results " + result.size());
 		for (Measurement m : result) {
 			if (i % 1000 == 0) {
-				System.out.println("Testing " + i++);
+				System.out.println("Testing " + i);
 			}
+			i++;
 			Measurement inserted = toInsertIterator.next();
 			assertEquals(inserted.getLocation(), m.getLocation());
 			assertEquals(inserted.getType(), m.getType());

@@ -59,6 +59,11 @@ public class MockDataStore extends DatastoreBase {
 	}
 
 	@Override
+	public List<String> getLocations() {
+		return null;
+	}
+
+	@Override
 	public Measurement getLastMeasurement(String location, SensorType type) {
 		calls.add(new Call(Method.GET_LAST_MEASUREMENT, location, type));
 		return null;

@@ -6,11 +6,18 @@ import hu.droidium.remote_home_manager.RaspberryTemperatureSensor;
 import hu.droidium.remote_home_manager.SQLJetDatastore;
 import hu.droidium.telemetering.interfaces.LanguageInterface;
 import hu.droidium.telemetering.interfaces.SensorType;
+
+import java.util.LinkedList;
+import java.util.List;
+
 import main.TelemeteringIRCClient;
 
 public class LovasRaspberrySingleNode extends SQLJetDatastore{
 	
-	private static final String[] locations = {"a nappaliban"};
+	private static final List<String> locations = new LinkedList<String>();
+	static {
+		locations.add("a nappaliban");
+	}
 	private final boolean demoMode;
 	
 	public LovasRaspberrySingleNode(String databaseFile, boolean demoMode) {
@@ -20,7 +27,7 @@ public class LovasRaspberrySingleNode extends SQLJetDatastore{
 	}
 	
 	@Override
-	public String[] getLocations() {
+	public List<String> getLocations() {
 		return locations;
 	}
 	
@@ -37,7 +44,7 @@ public class LovasRaspberrySingleNode extends SQLJetDatastore{
 					} else {
 						temp = RaspberryTemperatureSensor.measure();
 					}
-					saveMeasurement(locations[0], SensorType.TEMPERATURE, System.currentTimeMillis(), temp);
+					saveMeasurement(locations.get(0), SensorType.TEMPERATURE, System.currentTimeMillis(), temp);
 					try {
 						Thread.sleep(10000);
 					} catch (InterruptedException e) {

@@ -5,23 +5,29 @@ import hu.droidium.telemetering.interfaces.SensorType;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class MySQLDataStore extends DatastoreBase {
 	
 	private static final String MEASUREMENT_TABLE = "measurement";
 
-	private static final String SENSOR_ID = "sensor_id";
 	private static final String TIME = "timestamp";
+	private static final String TYPE = "type";
 	private static final String VALUE = "value";
+	private static final String LOCATION = "location";
+	
 
 	private static final String CREATE_MEASUREMENT = "CREATE TABLE IF NOT EXISTS " + MEASUREMENT_TABLE + " " +
 			"(" +
-			TIME + " INTEGER NOT NULL," +
-			SENSOR_ID + " TEXT NOT NULL," +
-			VALUE + " INTEGER NOT NULL" +
+			TIME + " BIGINT NOT NULL," +
+			LOCATION + " TEXT NOT NULL," + 
+			TYPE + " TEXT NOT NULL," + 
+			VALUE + " BIGINT NOT NULL" +
 			")";
 
 	
@@ -51,150 +57,140 @@ public class MySQLDataStore extends DatastoreBase {
 	}
 
 	@Override
-	public String[] getLocations() {
-		// TODO Auto-generated method stub
+	public List<String> getLocations() {
+		try {
+			Statement stmt = conn.createStatement();
+			String sql = "SELECT DISTINCT location from " + MEASUREMENT_TABLE + ";";
+			ResultSet result = stmt.executeQuery(sql);
+			List<String> ret = new ArrayList<String>();
+			for (result.beforeFirst(); result.next();) {
+				ret.add(result.getString(LOCATION));
+			}
+			result.close();
+			stmt.close();
+			return ret;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 
 	@Override
 	public boolean saveMeasurement(String location, SensorType type, long time, long value) {
-		// TODO Auto-generated method stub
+		String sql = "INSERT INTO " + MEASUREMENT_TABLE +
+				"(" +
+				TIME + ", " +
+				LOCATION + ", " +
+				TYPE + ", " +
+				VALUE +
+				") VALUES (" +
+				time +"," + 
+				"'" + location + "'," +
+				"'" + type.getName() + "'," +
+				value + 
+				");";
+		try {
+			Statement stmt = conn.createStatement();
+			int affectedRows = stmt.executeUpdate(sql);
+			stmt.close();
+			return affectedRows > 0;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		return false;
 	}
 
 	@Override
 	public boolean bulkInster(List<Measurement> measurements) {
-		// TODO Auto-generated method stub
+		try {
+			conn.setAutoCommit(false);
+			for (Measurement m : measurements) {
+				if (!saveMeasurement(m.getLocation(), m.getType(), m.getTime(), m.getValue())) {
+					throw new SQLException("Couldn't insert row.");
+				}
+			}
+			conn.commit();
+			conn.setAutoCommit(true);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			try {
+				conn.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+		}
 		return false;
 	}
 
 	@Override
 	public Measurement getLastMeasurement(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Measurement> getLastHoursMeasurements(String location, SensorType type) {
-		// TODO Auto-generated method stub
+		try {
+			Statement stmt = conn.createStatement();
+			String sql = "SELECT * FROM " + MEASUREMENT_TABLE + " WHERE " 
+					+ LOCATION + " = '" + location + "' AND " + TYPE + " = '"+ type +"' "
+					+ " ORDER BY " + TIME + " DESC LIMIT 1;";
+			ResultSet result = stmt.executeQuery(sql);
+			Measurement ret = null;
+			if (result.first()) {
+				ret = new Measurement(location, type, result.getLong(TIME), result.getLong(VALUE));
+			}
+			result.close();
+			stmt.close();
+			return ret;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 
 	@Override
 	public List<Measurement> getMeasurements(String location, SensorType type, long startTime, long endTime) {
-		// TODO Auto-generated method stub
+		try {
+			Statement stmt = conn.createStatement();
+			String sql = "SELECT * FROM " + MEASUREMENT_TABLE + " WHERE " 
+					+ LOCATION + " = '" + location + "' AND " + TYPE + " = '"+ type +"' AND "
+					+ TIME + " > " + startTime + " AND "
+					+ TIME + " < " + endTime
+					+ " ORDER BY " + TIME + ";";
+			ResultSet result = stmt.executeQuery(sql);
+			List<Measurement> ret = new LinkedList<Measurement>();
+			for (result.beforeFirst(); result.next();) {
+				Measurement measurement = new Measurement(location, type, result.getLong(TIME), result.getLong(VALUE));
+				ret.add(measurement);
+			}
+			result.close();
+			stmt.close();
+			return ret;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
-
+	
 	@Override
-	public Measurement getLastHoursAverage(String location, SensorType type) {
-		// TODO Auto-generated method stub
+	public Measurement getMeasurementAverage(String location, SensorType type, long startTime, long endTime) {
+		try {
+			Statement stmt = conn.createStatement();
+			String averageValue = "average_value";
+			String sql = "SELECT AVG(" + VALUE + ") AS " + averageValue + " FROM " + MEASUREMENT_TABLE + " WHERE " 
+					+ LOCATION + " = '" + location + "' AND " + TYPE + " = '"+ type +"' AND "
+					+ TIME + " > " + startTime + " AND "
+					+ TIME + " < " + endTime
+					+ "ORDER BY " + TIME + ";";
+			ResultSet result = stmt.executeQuery(sql);
+			Measurement ret = null;
+			if (result.first()) {
+				ret = new Measurement(location, type, startTime, result.getLong(averageValue));
+			}
+			result.close();
+			stmt.close();
+			return ret;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
-
-	@Override
-	public Measurement getLastDaysAverage(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastWeeksAverage(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastMonthsAverage(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Measurement> getLastDayByHours(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Measurement> getLastWeekByDays(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Measurement> getLastMonthByDays(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Measurement> getMeasurementAverages(String location, SensorType type, long startTime, long endTime,
-			long window) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastHoursMaximum(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastHoursMinimum(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastDaysMaximum(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastDaysMinimum(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastWeeksMaximum(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastWeeksMinimum(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastMonthsMaximum(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getLastMonthsMinimum(String location, SensorType type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getMaximum(String location, SensorType type, long startTime, long endTime) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Measurement getMinimum(String location, SensorType type, long startTime, long endTime) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
+	
 	public static void main(String[] args) {
 		try {
 			new MySQLDataStore("jdbc:mysql://localhost:3306", "telemetering" , "root", "cicamica");

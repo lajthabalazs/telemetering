@@ -175,8 +175,7 @@ public class MySQLDataStore extends DatastoreBase {
 			String sql = "SELECT AVG(" + VALUE + ") AS " + averageValue + " FROM " + MEASUREMENT_TABLE + " WHERE " 
 					+ LOCATION + " = '" + location + "' AND " + TYPE + " = '"+ type +"' AND "
 					+ TIME + " > " + startTime + " AND "
-					+ TIME + " < " + endTime
-					+ "ORDER BY " + TIME + ";";
+					+ TIME + " < " + endTime + ";";
 			ResultSet result = stmt.executeQuery(sql);
 			Measurement ret = null;
 			if (result.first()) {

@@ -51,4 +51,23 @@ public abstract class TestDatastore {
 			assertEquals(inserted.getTime(), m.getTime());
 		}
 	}
+
+	@Test
+	public void testGetAverage() {
+		long startTime = 1000;
+		long endTime = 2000;
+		List<Measurement> toInsert = new LinkedList<Measurement>();
+		for (int i = 0; i < 101; i++) {
+			toInsert.add( new Measurement("sarok", SensorType.TEMPERATURE, (long)i,(long) i + 1000));
+		}
+		for (int i = 0; i < 101; i++) {
+			toInsert.add( new Measurement("sarok", SensorType.TEMPERATURE, (long)(i + 1500),(long) i));
+		}
+		for (int i = 0; i < 101; i++) {
+			toInsert.add( new Measurement("sarok", SensorType.TEMPERATURE, (long)(i + 2001),(long) i + 1000));
+		}
+		datastore.bulkInster(toInsert);
+		Measurement result = datastore.getMeasurementAverage("sarok", SensorType.TEMPERATURE, startTime - 1, endTime + 1);
+		assertEquals(50, result.getValue());
+	}
 }

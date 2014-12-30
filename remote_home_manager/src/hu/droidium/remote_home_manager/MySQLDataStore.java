@@ -1,5 +1,6 @@
 package hu.droidium.remote_home_manager;
 
+import hu.droidium.telemetering.interfaces.AutoTarget;
 import hu.droidium.telemetering.interfaces.Measurement;
 import hu.droidium.telemetering.interfaces.SensorType;
 
@@ -20,7 +21,18 @@ public class MySQLDataStore extends DatastoreBase {
 	private static final String TYPE = "type";
 	private static final String VALUE = "value";
 	private static final String LOCATION = "location";
+
+	private static final String THRESHGOLDS_TABLE = "thresholds";
 	
+	private static final String HEATER_PROGRAM_TABLE = "heater_program";
+
+	private static final String HEATER = "heater";
+
+	private static final String TARGET_TEMP = "target_temp";
+	private static final String TARGET_THRESHOLD = "target_threshold";
+	private static final String AUTO_MODE_ENABLED = "auto_mode_enabled";
+	private static final String MANUAL_HEATING_TIL = "manual_heating_til";
+
 
 	private static final String CREATE_MEASUREMENT = "CREATE TABLE IF NOT EXISTS " + MEASUREMENT_TABLE + " " +
 			"(" +
@@ -30,6 +42,21 @@ public class MySQLDataStore extends DatastoreBase {
 			VALUE + " BIGINT NOT NULL" +
 			")";
 
+	private static final String CREATE_HEATER_PROGRAM = "CREATE TABLE IF NOT EXISTS " + HEATER_PROGRAM_TABLE + " " +
+			"(" +
+			TIME + " BIGINT NOT NULL," +
+			HEATER + " TEXT NOT NULL," + 
+			MANUAL_HEATING_TIL + " BIGINT NOT NULL" +
+			")";
+
+	private static final String CREATE_THRESHOLDS = "CREATE TABLE IF NOT EXISTS " + THRESHGOLDS_TABLE + " " +
+			"(" +
+			TIME + " BIGINT NOT NULL," +
+			LOCATION + " TEXT NOT NULL," + 
+			TARGET_TEMP + " INT NOT NULL" +
+			TARGET_THRESHOLD + " INT NOT NULL" +
+			AUTO_MODE_ENABLED + " BOOL NOT NULL" +
+			")";
 	
 	private Connection conn;
 
@@ -50,10 +77,13 @@ public class MySQLDataStore extends DatastoreBase {
 		String sql = "CREATE DATABASE If NOT EXISTS " + databaseName;
 		stmt.executeUpdate(sql);
 		// Create tables
-		conn.setCatalog(databaseName);
 		stmt.close();
+		conn.setCatalog(databaseName);
 		stmt = conn.createStatement();
 		stmt.executeUpdate(CREATE_MEASUREMENT);
+		stmt.executeUpdate(CREATE_THRESHOLDS);
+		stmt.executeUpdate(CREATE_HEATER_PROGRAM);
+		stmt.close();
 	}
 
 	@Override
@@ -196,5 +226,112 @@ public class MySQLDataStore extends DatastoreBase {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public List<String> getAvailableSensorTypes(String location) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public long getHeatingEnd(String heater) {
+		try {
+			Statement stmt = conn.createStatement();
+			String sql = "SELECT * FROM " + HEATER_PROGRAM_TABLE + " WHERE " 
+					+ HEATER + " = '" + heater
+					+ " ORDER BY " + TIME + " DESC LIMIT 1;";
+			ResultSet result = stmt.executeQuery(sql);
+			long ret = 0;
+			if (result.first()) {
+				ret = result.getLong(MANUAL_HEATING_TIL);
+			}
+			result.close();
+			stmt.close();
+			return ret;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return 0;
+	}
+
+	@Override
+	public boolean heatUntil(String heater, long time, long til) {
+		String sql = "INSERT INTO " + HEATER_PROGRAM_TABLE +
+				"(" +
+				TIME + ", " +
+				HEATER + ", " +
+				MANUAL_HEATING_TIL +
+				") VALUES (" +
+				time +"," + 
+				"'" + heater + "'," +
+				til + 
+				");";
+		try {
+			Statement stmt = conn.createStatement();
+			int affectedRows = stmt.executeUpdate(sql);
+			stmt.close();
+			return affectedRows > 0;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	@Override
+	public boolean setTarget(String location, int temp, int threshold, boolean auto, long time) {
+		String sql = "INSERT INTO " + THRESHGOLDS_TABLE +
+				"(" +
+				TIME + ", " +
+				LOCATION + ", " +
+				TARGET_TEMP + ", " +
+				TARGET_THRESHOLD +
+				") VALUES (" +
+				time +"," + 
+				"'" + location + "'," +
+				temp + "," +
+				threshold +  "," +
+				auto + 
+				");";
+		try {
+			Statement stmt = conn.createStatement();
+			int affectedRows = stmt.executeUpdate(sql);
+			stmt.close();
+			return affectedRows > 0;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	@Override
+	public boolean stopHeating(String heater, long time) {
+		return heatUntil(heater, time, 0);
+	}
+
+	@Override
+	public AutoTarget getTarget(String location) {
+		try {
+			Statement stmt = conn.createStatement();
+			String sql = "SELECT * FROM " + THRESHGOLDS_TABLE
+					+ " ORDER BY " + TIME + " DESC LIMIT 1;";
+			ResultSet result = stmt.executeQuery(sql);
+			int target = 0;
+			int threshold = 0;
+			long time = 0;
+			boolean auto = false;
+			if (result.first()) {
+				target = result.getInt(TARGET_TEMP);
+				threshold = result.getInt(TARGET_THRESHOLD);
+				time = result.getLong(TIME);
+				auto = result.getBoolean(AUTO_MODE_ENABLED);
+			}
+			result.close();
+			stmt.close();
+			return new AutoTarget(location, time, target, threshold, auto);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 }

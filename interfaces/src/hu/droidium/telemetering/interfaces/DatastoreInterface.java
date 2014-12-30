@@ -3,9 +3,12 @@ package hu.droidium.telemetering.interfaces;
 import java.util.List;
 
 public interface DatastoreInterface {
-	
+
+	// Meta data
 	public List<String> getLocations();
+	public List<String> getAvailableSensorTypes(String location);
 	
+	// Measurements
 	public boolean saveMeasurement(String location, SensorType type, long time, long value);
 	public boolean bulkInster(List<Measurement> measurements);
 	
@@ -35,4 +38,11 @@ public interface DatastoreInterface {
 	public Measurement getLastMonthsMinimum(String location, SensorType type);
 	public Measurement getMaximum(String location, SensorType type, long startTime, long endTime);
 	public Measurement getMinimum(String location, SensorType type, long startTime, long endTime);
+	
+	// Heating
+	public boolean setTarget(String location, int targetTemperature, int targetThreshold, boolean auto, long time);
+	public AutoTarget getTarget(String location);
+	public boolean heatUntil(String heater, long time, long til);
+	public long getHeatingEnd(String heater);
+	public boolean stopHeating(String heater, long time);
 }

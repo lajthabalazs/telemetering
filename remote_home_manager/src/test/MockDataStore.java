@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import hu.droidium.remote_home_manager.DatastoreBase;
+import hu.droidium.telemetering.interfaces.AutoTarget;
 import hu.droidium.telemetering.interfaces.Measurement;
 import hu.droidium.telemetering.interfaces.SensorType;
 
@@ -97,6 +98,42 @@ public class MockDataStore extends DatastoreBase {
 
 	@Override
 	public boolean bulkInster(List<Measurement> measurements) {
+		return false;
+	}
+
+	@Override
+	public List<String> getAvailableSensorTypes(String location) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean setTarget(String location, int targetTemperature, int targetThreshold, boolean auto, long time) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public AutoTarget getTarget(String location) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean heatUntil(String heater, long time, long til) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public long getHeatingEnd(String heater) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public boolean stopHeating(String heater, long time) {
+		// TODO Auto-generated method stub
 		return false;
 	}
 }

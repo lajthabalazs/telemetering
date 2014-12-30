@@ -1,5 +1,6 @@
 package hu.droidium.remote_home_manager;
 
+import hu.droidium.telemetering.interfaces.AutoTarget;
 import hu.droidium.telemetering.interfaces.Measurement;
 import hu.droidium.telemetering.interfaces.SensorType;
 
@@ -269,5 +270,41 @@ public class SQLJetDatastore extends DatastoreBase {
 	private SensorType getType(String recordSensorId) {
 		String[] parts = recordSensorId.split("_");
 		return SensorType.getType(parts[1]);
+	}
+
+	@Override
+	public List<String> getAvailableSensorTypes(String location) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean setTarget(String location, int targetTemperature, int targetThreshold, boolean auto, long time) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public AutoTarget getTarget(String location) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean heatUntil(String heater, long time, long til) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public long getHeatingEnd(String heater) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public boolean stopHeating(String heater, long time) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

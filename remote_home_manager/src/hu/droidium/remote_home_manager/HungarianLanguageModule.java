@@ -1,8 +1,10 @@
 package hu.droidium.remote_home_manager;
 
 import hu.droidium.telemetering.interfaces.LanguageInterface;
+import hu.droidium.telemetering.interfaces.LayoutStoreInterface;
 import hu.droidium.telemetering.interfaces.Measurement;
-import hu.droidium.telemetering.interfaces.DatastoreInterface;
+import hu.droidium.telemetering.interfaces.MeasurementStoreInterface;
+import hu.droidium.telemetering.interfaces.ProgramStoreInterface;
 import hu.droidium.telemetering.interfaces.SensorType;
 
 import java.text.SimpleDateFormat;
@@ -59,10 +61,17 @@ public class HungarianLanguageModule implements LanguageInterface {
 		SENSOR_TYPE_TO_STRING_HASH.put(SensorType.MOVEMENT, "mozgás");
 		SENSOR_TYPE_TO_STRING_HASH.put(SensorType.MOVEMENT, "a mozgás");
 	}
-	private DatastoreInterface sensorDataStore;
 	
-	public HungarianLanguageModule( DatastoreInterface sensorDataStore) {
+	private MeasurementStoreInterface sensorDataStore;
+	@SuppressWarnings("unused")
+	private LayoutStoreInterface layoutStore;
+	@SuppressWarnings("unused")
+	private ProgramStoreInterface programStore;
+	
+	public HungarianLanguageModule( LayoutStoreInterface layoutStore, MeasurementStoreInterface sensorDataStore, ProgramStoreInterface programStore) {
 		this.sensorDataStore = sensorDataStore;
+		this.layoutStore = layoutStore;
+		this.programStore = programStore;
 	}
 	
 	@Override

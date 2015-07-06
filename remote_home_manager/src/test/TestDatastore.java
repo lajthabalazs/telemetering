@@ -7,7 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import hu.droidium.telemetering.interfaces.DatastoreInterface;
+import hu.droidium.telemetering.interfaces.MeasurementStoreInterface;
 import hu.droidium.telemetering.interfaces.Measurement;
 import hu.droidium.telemetering.interfaces.SensorType;
 
@@ -15,7 +15,7 @@ import org.junit.Test;
 
 public abstract class TestDatastore {
 	
-	DatastoreInterface datastore;
+	MeasurementStoreInterface datastore;
 
 	@Test
 	public void testDatastoreWrite() {

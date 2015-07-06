@@ -229,9 +229,11 @@ public class MySQLDataStore extends DatastoreBase {
 	}
 
 	@Override
-	public List<String> getAvailableSensorTypes(String location) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<SensorType> getAvailableSensorTypes(String location) {
+		// For now, only sensor type available is temperature
+		LinkedList<SensorType> ret = new LinkedList<SensorType>();
+		ret.add(SensorType.TEMPERATURE);
+		return ret;
 	}
 
 	@Override

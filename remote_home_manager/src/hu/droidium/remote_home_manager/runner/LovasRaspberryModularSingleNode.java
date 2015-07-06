@@ -3,32 +3,24 @@ package hu.droidium.remote_home_manager.runner;
 import hu.droidium.remote_home_manager.GUIClient;
 import hu.droidium.remote_home_manager.HungarianLanguageModule;
 import hu.droidium.remote_home_manager.RaspberryTemperatureSensor;
-import hu.droidium.remote_home_manager.SQLJetDatastore;
 import hu.droidium.telemetering.interfaces.LanguageInterface;
+import hu.droidium.telemetering.interfaces.LayoutStoreInterface;
+import hu.droidium.telemetering.interfaces.MeasurementStoreInterface;
+import hu.droidium.telemetering.interfaces.ProgramStoreInterface;
 import hu.droidium.telemetering.interfaces.SensorType;
-
-import java.util.LinkedList;
-import java.util.List;
 
 import main.TelemeteringIRCClient;
 
-public class LovasRaspberrySingleNode extends SQLJetDatastore{
+public class LovasRaspberryModularSingleNode {
 	
-	private static final List<String> locations = new LinkedList<String>();
-	static {
-		locations.add("a nappaliban");
-	}
+	private LayoutStoreInterface layoutStore;
+	private MeasurementStoreInterface measurementStore;
+	private ProgramStoreInterface programStore;
+	
 	private final boolean demoMode;
 	
-	public LovasRaspberrySingleNode(String databaseFile, boolean demoMode) {
-		super(databaseFile);
-		System.out.println("Constructor run.");
+	public LovasRaspberryModularSingleNode(boolean demoMode) {
 		this.demoMode = demoMode;
-	}
-	
-	@Override
-	public List<String> getLocations() {
-		return locations;
 	}
 	
 	private void run() {
@@ -44,7 +36,7 @@ public class LovasRaspberrySingleNode extends SQLJetDatastore{
 					} else {
 						temp = RaspberryTemperatureSensor.measure();
 					}
-					saveMeasurement(locations.get(0), SensorType.TEMPERATURE, System.currentTimeMillis(), temp);
+					measurementStore.saveMeasurement(layoutStore.getLocations().get(0), SensorType.TEMPERATURE, System.currentTimeMillis(), temp);
 					try {
 						Thread.sleep(10000);
 					} catch (InterruptedException e) {
@@ -90,9 +82,9 @@ public class LovasRaspberrySingleNode extends SQLJetDatastore{
 		System.out.println("Chat room " + chatRoom);
 		System.out.println("Demo mode " + demoMode);
 
-		LovasRaspberrySingleNode node = new LovasRaspberrySingleNode(databaseFile, demoMode);
+		LovasRaspberryModularSingleNode node = new LovasRaspberryModularSingleNode(demoMode);
 		node.run();		
-		LanguageInterface languageInterface = new HungarianLanguageModule(null, null, null);
+		LanguageInterface languageInterface = new HungarianLanguageModule(node.layoutStore, node.measurementStore, node.programStore);
 		while (true) {
 			try {
 				new TelemeteringIRCClient(userName, chatServer, port, chatRoom, languageInterface);

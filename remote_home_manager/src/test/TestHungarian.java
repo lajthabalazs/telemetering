@@ -21,7 +21,7 @@ public class TestHungarian {
 	@Before
 	public void init() {
 		mockDataStore = new MockDataStore();
-		languageModule = new HungarianLanguageModule(mockDataStore);
+		languageModule = new HungarianLanguageModule(mockDataStore, mockDataStore, mockDataStore);
 	}
 	
 	private Calendar getCalendar() {

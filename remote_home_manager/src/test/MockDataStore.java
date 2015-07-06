@@ -102,7 +102,7 @@ public class MockDataStore extends DatastoreBase {
 	}
 
 	@Override
-	public List<String> getAvailableSensorTypes(String location) {
+	public List<SensorType> getAvailableSensorTypes(String location) {
 		// TODO Auto-generated method stub
 		return null;
 	}

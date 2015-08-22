@@ -221,7 +221,7 @@ public class TestHungarian {
 		long startTime = calendar.getTimeInMillis() - 1800l * 1000l;
 		long endTime = startTime + 3600l * 1000l;
 		languageModule.getResponse("Mennyire volt hideg 11-kor a nappaliban?", time);
-		checkCall(mockDataStore, Method.GET_MEASUREMENTS, "a nappaliban", SensorType.TEMPERATURE, startTime, endTime);		
+		checkCall(mockDataStore, Method.GET_AVERAGES, "a nappaliban", SensorType.TEMPERATURE, startTime, endTime);		
 	}
 
 	@Test
@@ -235,7 +235,7 @@ public class TestHungarian {
 		long startTime = calendar.getTimeInMillis() - 24l * 3600l * 1000l - 1800l * 1000l;
 		long endTime = startTime + 3600l * 1000l;
 		languageModule.getResponse("Mennyire volt hideg 17-kor a nappaliban?", time);
-		checkCall(mockDataStore, Method.GET_MEASUREMENTS, "a nappaliban", SensorType.TEMPERATURE, startTime, endTime);		
+		checkCall(mockDataStore, Method.GET_AVERAGES, "a nappaliban", SensorType.TEMPERATURE, startTime, endTime);		
 	}
 
 	@Test
@@ -251,7 +251,7 @@ public class TestHungarian {
 		long endTime = startTime + 3600l * 1000l / 4;
 		System.out.println(new Date(endTime));
 		languageModule.getResponse("Mennyire volt hideg 11:30-kor a nappaliban?", time);
-		checkCall(mockDataStore, Method.GET_MEASUREMENTS, "a nappaliban", SensorType.TEMPERATURE, startTime, endTime);		
+		checkCall(mockDataStore, Method.GET_AVERAGES, "a nappaliban", SensorType.TEMPERATURE, startTime, endTime);		
 	}
 
 	public void testLongHourTodayJustMinutes() {
@@ -279,7 +279,7 @@ public class TestHungarian {
 		long startTime = calendar.getTimeInMillis() - 3600l * 1000l / 8;
 		long endTime = startTime + 3600l * 1000l / 4;
 		languageModule.getResponse("Mennyire volt hideg 17:25-kor a nappaliban?", time);
-		checkCall(mockDataStore, Method.GET_MEASUREMENTS, "a nappaliban", SensorType.TEMPERATURE, startTime, endTime);		
+		checkCall(mockDataStore, Method.GET_AVERAGES, "a nappaliban", SensorType.TEMPERATURE, startTime, endTime);		
 	}
 
 	@Test
@@ -294,18 +294,23 @@ public class TestHungarian {
 		long startTime = calendar.getTimeInMillis() - 3600l * 1000l / 8;
 		long endTime = startTime + 3600l * 1000l / 4;
 		languageModule.getResponse("Mennyire volt hideg 13:55-kor a nappaliban?", time);
-		checkCall(mockDataStore, Method.GET_MEASUREMENTS, "a nappaliban", SensorType.TEMPERATURE, startTime, endTime);		
+		checkCall(mockDataStore, Method.GET_AVERAGES, "a nappaliban", SensorType.TEMPERATURE, startTime, endTime);		
 	}
 
 	private void checkCall(Call call, Method method, String location, SensorType type) {
+		System.out.println("Expected method " + method + " call's method " + call.method);
 		assertEquals(method, call.method);
+		System.out.println("Expected location " + location + " call's location " + call.location);
 		assertEquals(location, call.location);
+		System.out.println("Expected type " + method + " call's method " + call.type);
 		assertEquals(type, call.type);
 	}
 
 	private void checkCall(Call call, Method method, String location, SensorType type, long startTime, long endTime) {
 		checkCall(call, method, location, type);
+		System.out.println("Expected start time " + startTime + ", call's start time " + call.startTime + ((startTime == call.startTime)?" OK":"FAIL"));
 		assertEquals(startTime, call.startTime);
+		System.out.println("Expected end time " + endTime + ", call's end time " + call.endTime + ((endTime == call.endTime)?" OK":"FAIL"));
 		assertEquals(endTime, call.endTime);
 	}
 
@@ -321,7 +326,7 @@ public class TestHungarian {
 		mockDataStore.clear();
 	}
 
-	private void checkCall(MockDataStore mockDataStore, Method method, String location, SensorType type, long startTime, long endTime) {
+	private void checkCall(MockDataStore mockDataStore, Method method, String location, SensorType type, long startTime, long endTime) {		
 		assertEquals(1, mockDataStore.getCalls().size());
 		Call call = mockDataStore.getCalls().get(0);
 		checkCall(call, method, location, type, startTime, endTime);

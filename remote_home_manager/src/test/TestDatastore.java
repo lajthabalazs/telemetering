@@ -56,18 +56,32 @@ public abstract class TestDatastore {
 	public void testGetAverage() {
 		long startTime = 1000;
 		long endTime = 2000;
+		long total = 0;
+		long measured = 0;
+		int measurementCount = 0;
 		List<Measurement> toInsert = new LinkedList<Measurement>();
+		
 		for (int i = 0; i < 101; i++) {
-			toInsert.add( new Measurement("sarok", SensorType.TEMPERATURE, (long)i,(long) i + 1000));
+			// Measurements before start time
+			toInsert.add( new Measurement("sarok", SensorType.TEMPERATURE, (long) i, 1000l));
 		}
+		
 		for (int i = 0; i < 101; i++) {
-			toInsert.add( new Measurement("sarok", SensorType.TEMPERATURE, (long)(i + 1500),(long) i));
+			// Measurements in range
+			measured = i;
+			toInsert.add( new Measurement("sarok", SensorType.TEMPERATURE, (long)(i + 1500), measured));
+			total = total + measured;
+			measurementCount ++;
 		}
+		
 		for (int i = 0; i < 101; i++) {
-			toInsert.add( new Measurement("sarok", SensorType.TEMPERATURE, (long)(i + 2001),(long) i + 1000));
+			// Measurements after end time
+			toInsert.add( new Measurement("sarok", SensorType.TEMPERATURE, (long)(i + 3000),(long) i + 1000));
 		}
+		long expected = total / measurementCount;
 		datastore.bulkInster(toInsert);
 		Measurement result = datastore.getMeasurementAverage("sarok", SensorType.TEMPERATURE, startTime - 1, endTime + 1);
-		assertEquals(50, result.getValue());
+		System.out.println("Expected " + expected + ", received: " + result.getValue());		
+		assertEquals(expected, result.getValue());
 	}
 }

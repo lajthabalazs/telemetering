@@ -1,4 +1,4 @@
-package hu.droidium.remote_home_manager;
+package hu.droidium.telemetering.interfaces;
 
 public enum TimeFrame {
 	HOUR, DAY, WEEK, MONTH, YEAR

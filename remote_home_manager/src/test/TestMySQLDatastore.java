@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import hu.droidium.remote_home_manager.MySQLDataStore;
+import hu.droidium.remote_home_manager.database.MySQLDataStore;
 
 import org.junit.After;
 import org.junit.Before;

@@ -1,6 +1,7 @@
-package hu.droidium.remote_home_manager;
+package hu.droidium.remote_home_manager.database;
 
 import hu.droidium.telemetering.interfaces.AutoTarget;
+import hu.droidium.telemetering.interfaces.DatastoreBase;
 import hu.droidium.telemetering.interfaces.Measurement;
 import hu.droidium.telemetering.interfaces.SensorType;
 

@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 
-import hu.droidium.remote_home_manager.SQLJetDatastore;
+import hu.droidium.remote_home_manager.database.SQLJetDatastore;
 
 import org.junit.After;
 import org.junit.Before;

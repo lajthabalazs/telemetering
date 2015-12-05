@@ -1,4 +1,4 @@
-package hu.droidium.remote_home_manager;
+package hu.droidium.telemetering.interfaces;
 
 import hu.droidium.telemetering.interfaces.LayoutStoreInterface;
 import hu.droidium.telemetering.interfaces.Measurement;

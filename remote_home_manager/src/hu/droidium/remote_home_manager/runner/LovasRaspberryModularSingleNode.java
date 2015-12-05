@@ -9,8 +9,6 @@ import hu.droidium.telemetering.interfaces.MeasurementStoreInterface;
 import hu.droidium.telemetering.interfaces.ProgramStoreInterface;
 import hu.droidium.telemetering.interfaces.SensorType;
 
-import main.TelemeteringIRCClient;
-
 public class LovasRaspberryModularSingleNode {
 	
 	private LayoutStoreInterface layoutStore;
@@ -87,7 +85,8 @@ public class LovasRaspberryModularSingleNode {
 		LanguageInterface languageInterface = new HungarianLanguageModule(node.layoutStore, node.measurementStore, node.programStore);
 		while (true) {
 			try {
-				new TelemeteringIRCClient(userName, chatServer, port, chatRoom, languageInterface);
+				// new TelemeteringIRCClient(userName, chatServer, port, chatRoom, languageInterface);
+				// TODO start client
 				break;
 			} catch (Exception e) {
 				e.printStackTrace();

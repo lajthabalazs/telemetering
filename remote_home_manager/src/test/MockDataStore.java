@@ -3,8 +3,8 @@ package test;
 import java.util.LinkedList;
 import java.util.List;
 
-import hu.droidium.remote_home_manager.DatastoreBase;
 import hu.droidium.telemetering.interfaces.AutoTarget;
+import hu.droidium.telemetering.interfaces.DatastoreBase;
 import hu.droidium.telemetering.interfaces.Measurement;
 import hu.droidium.telemetering.interfaces.SensorType;
 

@@ -2,6 +2,7 @@ package test;
 
 import static org.junit.Assert.assertEquals;
 import hu.droidium.remote_home_manager.HungarianLanguageModule;
+import hu.droidium.remote_home_manager.RaspberryRelayController;
 import hu.droidium.telemetering.interfaces.SensorType;
 
 import java.util.Calendar;
@@ -21,7 +22,8 @@ public class TestHungarian {
 	@Before
 	public void init() {
 		mockDataStore = new MockDataStore();
-		languageModule = new HungarianLanguageModule(mockDataStore, mockDataStore, mockDataStore);
+		RaspberryRelayController mockRelayController = new RaspberryRelayController();
+		languageModule = new HungarianLanguageModule(mockDataStore, mockDataStore, mockDataStore, mockRelayController);
 	}
 	
 	private Calendar getCalendar() {

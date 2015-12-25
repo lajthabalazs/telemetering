@@ -34,7 +34,7 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 	private ChatManager chatManager;
 	private VCardManager cardManager;
 	
-	public GoogleTalkClient(String userName, String password, String superUser) throws SmackException, IOException, XMPPException {
+	public GoogleTalkClient(String userName, String password) throws SmackException, IOException, XMPPException {
 		SmackConfiguration.DEBUG = true;
 		XMPPTCPConnectionConfiguration connConfig = XMPPTCPConnectionConfiguration.builder()
 				  .setUsernameAndPassword(userName, password)
@@ -113,7 +113,7 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 	}
 
 	public static void main(String args[]) throws SmackException, IOException, XMPPException {
-		new GoogleTalkClient(args[0], args[1],args[2]);
+		new GoogleTalkClient(args[0], args[1]);
 		new Thread(new Runnable() {
 			
 			@Override

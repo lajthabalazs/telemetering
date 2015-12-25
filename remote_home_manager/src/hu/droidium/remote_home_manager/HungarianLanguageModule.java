@@ -1,5 +1,6 @@
 package hu.droidium.remote_home_manager;
 
+import hu.droidium.remote_home_manager.runner.LovasRaspberryModularSingleNode;
 import hu.droidium.telemetering.interfaces.LanguageInterface;
 import hu.droidium.telemetering.interfaces.LayoutStoreInterface;
 import hu.droidium.telemetering.interfaces.Measurement;
@@ -65,25 +66,51 @@ public class HungarianLanguageModule implements LanguageInterface {
 		SENSOR_TYPE_TO_STRING_HASH.put(SensorType.MOVEMENT, "mozgás");
 		SENSOR_TYPE_TO_STRING_HASH.put(SensorType.MOVEMENT, "a mozgás");
 	}
-	
+
 	private MeasurementStoreInterface sensorDataStore;
 	@SuppressWarnings("unused")
 	private LayoutStoreInterface layoutStore;
 	@SuppressWarnings("unused")
 	private ProgramStoreInterface programStore;
+	private RelayController relayController;
 	
-	public HungarianLanguageModule( LayoutStoreInterface layoutStore, MeasurementStoreInterface sensorDataStore, ProgramStoreInterface programStore) {
+	public HungarianLanguageModule( LayoutStoreInterface layoutStore, MeasurementStoreInterface sensorDataStore, ProgramStoreInterface programStore, RaspberryRelayController relayController) {
 		this.sensorDataStore = sensorDataStore;
 		this.layoutStore = layoutStore;
 		this.programStore = programStore;
+		this.relayController = relayController;
 	}
 	
+	public HungarianLanguageModule(LovasRaspberryModularSingleNode node) {
+		this.sensorDataStore = node.getSensorDataStore();
+		this.layoutStore = node.getLayoutStore();
+		this.programStore = node.getProgramStore();
+		this.relayController = node.getRelayController();
+	}
+
 	@Override
 	public String getResponse(String message, long time) {
 		log("Question: " + message);
 		SimpleDateFormat format = new SimpleDateFormat("YYYY/MM/dd HH:mm");
 		log("Now " + format.format(new Date(time)));
 		message = message.toLowerCase();
+		
+		// Matching direct command
+		
+		if (message.startsWith("kapcsold be")) {
+			Relay relay = getRelay(message);
+			relayController.setState(relay, RelayState.ON);
+			return "Bal konnektor " + RelayState.ON.toResultStateString() + ".";
+			
+		} else if (message.startsWith("kapcsold ki")) {
+			Relay relay = getRelay(message);
+			relayController.setState(relay, RelayState.OFF);
+			return "Jobb konnektor " + RelayState.OFF.toResultStateString() + ".";
+		}
+		
+		// Matching rule
+		
+		// Matching queries
 		Pattern currentPattern = Pattern.compile(QUESTION + "( van | )" + SENSOR_TYPES + "( van | )(.*)\\?");
 		Matcher currentMatcher = currentPattern.matcher(message.toLowerCase());
 		if (currentMatcher.matches()) {
@@ -172,6 +199,14 @@ public class HungarianLanguageModule implements LanguageInterface {
 		return null;
 	}
 	
+	private Relay getRelay(String message) {
+		if (message.contains("bal") || message.contains("első")||message.contains("elso")) {
+			return Relay.RELAY_ONE;
+		} else {
+			return Relay.RELAY_TWO;
+		}
+	}
+
 	/**
 	 * 
 	 * @param limits

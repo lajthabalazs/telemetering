@@ -1,27 +1,36 @@
 package hu.droidium.remote_home_manager.runner;
 
-import hu.droidium.remote_home_manager.GUIClient;
-import hu.droidium.remote_home_manager.HungarianLanguageModule;
 import hu.droidium.remote_home_manager.RaspberryTemperatureSensor;
+import hu.droidium.remote_home_manager.RelayController;
 import hu.droidium.telemetering.interfaces.LanguageInterface;
 import hu.droidium.telemetering.interfaces.LayoutStoreInterface;
 import hu.droidium.telemetering.interfaces.MeasurementStoreInterface;
 import hu.droidium.telemetering.interfaces.ProgramStoreInterface;
 import hu.droidium.telemetering.interfaces.SensorType;
+import hu.droidium.telemetering.interfaces.UserStoreInterface;
+import hu.droidium.telemetering.interfaces.communication.MessageListener;
 
-public class LovasRaspberryModularSingleNode {
+public class LovasRaspberryModularSingleNode implements MessageListener {
 	
 	private LayoutStoreInterface layoutStore;
 	private MeasurementStoreInterface measurementStore;
 	private ProgramStoreInterface programStore;
 	
 	private final boolean demoMode;
+	private RelayController relayController;
+	private UserStoreInterface userStore;
+	private LanguageInterface languageInterface;
 	
-	public LovasRaspberryModularSingleNode(boolean demoMode) {
+	public LovasRaspberryModularSingleNode(boolean demoMode, LayoutStoreInterface layoutStore, MeasurementStoreInterface measurementStore, ProgramStoreInterface programStoreInterface, UserStoreInterface userStore, RelayController relayController) {
 		this.demoMode = demoMode;
+		this.layoutStore = layoutStore;
+		this.measurementStore = measurementStore;
+		this.programStore = programStoreInterface;
+		this.userStore = userStore;
+		this.relayController = relayController;
 	}
 	
-	private void run() {
+	protected void run() {
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -44,62 +53,47 @@ public class LovasRaspberryModularSingleNode {
 			}
 		}).start();
 	}
-	
-	public static void main(String[] args) {
-		String databaseFile;
-		String userName;
-		String chatServer;
-		int port;
-		String chatRoom;
-		boolean demoMode;
-		boolean ui;
-		System.out.println("Received " + args.length + " parameters.");
-		if (args.length == 6) {
-			System.out.println("Extracting parameters...");
-			databaseFile = args[0];
-			userName = args[1];
-			chatServer = args[2];
-			port = Integer.parseInt(args[3]);
-			chatRoom = args[4];
-			demoMode = Boolean.parseBoolean(args[5]);
-			ui = false;
-		} else {
-			System.out.println("Using built in parameters...");
-			databaseFile = "temp.sqlite";
-			userName = "lovas_telemetering_client";
-			chatServer = "irc.chatjunkies.org";
-			port = 6667;
-			chatRoom = "#xchat";
-			demoMode = true;
-			ui = true;
-		}
-		System.out.println("Database " + databaseFile);
-		System.out.println("User " + userName);
-		System.out.println("Chat server " + chatServer);
-		System.out.println("Port " + port);
-		System.out.println("Chat room " + chatRoom);
-		System.out.println("Demo mode " + demoMode);
 
-		LovasRaspberryModularSingleNode node = new LovasRaspberryModularSingleNode(demoMode);
-		node.run();		
-		LanguageInterface languageInterface = new HungarianLanguageModule(node.layoutStore, node.measurementStore, node.programStore);
-		while (true) {
-			try {
-				// new TelemeteringIRCClient(userName, chatServer, port, chatRoom, languageInterface);
-				// TODO start client
-				break;
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.out.println("Error " + e);
-			}
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+	public MeasurementStoreInterface getSensorDataStore() {
+		return measurementStore;
+	}
+
+	public LayoutStoreInterface getLayoutStore() {
+		return layoutStore;
+	}
+
+	public ProgramStoreInterface getProgramStore() {
+		return programStore;
+	}
+
+	public RelayController getRelayController() {
+		return relayController;
+	}	
+	
+	public UserStoreInterface getUserStore() {
+		return userStore;
+	}
+
+	@Override
+	public void messageReceived(String user, String message) {
+		if (userStore.isSuperUser(user)){
+			boolean commandMessage = processMessage(message);
+			if (!commandMessage) {
+				languageInterface.getResponse(message, System.currentTimeMillis());
 			}
 		}
-		if (ui) {
-			new GUIClient(languageInterface);
+		if (userStore.hasUser(user)) {
+			languageInterface.getResponse(message, System.currentTimeMillis());
 		}
 	}
+
+	private boolean processMessage(String message) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public void registerListener(LanguageInterface languageInterface) {
+		this.languageInterface = languageInterface;
+	}	
+
 }

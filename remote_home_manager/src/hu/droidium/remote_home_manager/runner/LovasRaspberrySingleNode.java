@@ -10,6 +10,7 @@ import hu.droidium.telemetering.interfaces.SensorType;
 import java.util.LinkedList;
 import java.util.List;
 
+@Deprecated
 public class LovasRaspberrySingleNode extends SQLJetDatastore{
 	
 	private static final List<String> locations = new LinkedList<String>();
@@ -90,7 +91,7 @@ public class LovasRaspberrySingleNode extends SQLJetDatastore{
 
 		LovasRaspberrySingleNode node = new LovasRaspberrySingleNode(databaseFile, demoMode);
 		node.run();		
-		LanguageInterface languageInterface = new HungarianLanguageModule(null, null, null);
+		LanguageInterface languageInterface = new HungarianLanguageModule(null, null, null, null);
 		while (true) {
 			try {
 				

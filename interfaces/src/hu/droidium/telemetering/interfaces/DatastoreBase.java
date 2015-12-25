@@ -10,7 +10,7 @@ import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 
-public abstract class DatastoreBase implements MeasurementStoreInterface, ProgramStoreInterface, LayoutStoreInterface {
+public abstract class DatastoreBase implements MeasurementStoreInterface, ProgramStoreInterface, LayoutStoreInterface, UserStoreInterface {
 	
 	private static final long HOUR_MILLIS = 3600000l;
 	

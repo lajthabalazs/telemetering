@@ -337,4 +337,28 @@ public class MySQLDataStore extends DatastoreBase {
 		}
 		return null;
 	}
+
+	@Override
+	public void addUser(String userName, boolean superUser) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public List<String> getUsers() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isSuperUser(String userName) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean hasUser(String user) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }

@@ -56,6 +56,7 @@ public class Main {
 			try {
 				Channel commClient = new GoogleTalkClient(userName, password);
 				commClient.registerMessageListener(node);
+				node.setLanguageInterface(commClient);
 				break;
 			} catch (Exception e) {
 				e.printStackTrace();

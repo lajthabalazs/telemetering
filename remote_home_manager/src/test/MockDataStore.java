@@ -103,61 +103,50 @@ public class MockDataStore extends DatastoreBase {
 
 	@Override
 	public List<SensorType> getAvailableSensorTypes(String location) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public boolean setTarget(String location, int targetTemperature, int targetThreshold, boolean auto, long time) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public AutoTarget getTarget(String location) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public boolean heatUntil(String heater, long time, long til) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public long getHeatingEnd(String heater) {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
 	public boolean stopHeating(String heater, long time) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public void addUser(String userName, boolean superUser) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public List<String> getUsers() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public boolean isSuperUser(String userName) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public boolean hasUser(String user) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 }

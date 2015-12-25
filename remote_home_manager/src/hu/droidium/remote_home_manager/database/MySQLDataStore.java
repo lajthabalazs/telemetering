@@ -16,6 +16,8 @@ import java.util.List;
 
 public class MySQLDataStore extends DatastoreBase {
 	
+	// TODO implement user functionality
+	
 	private static final String MEASUREMENT_TABLE = "measurement";
 
 	private static final String TIME = "timestamp";
@@ -340,25 +342,20 @@ public class MySQLDataStore extends DatastoreBase {
 
 	@Override
 	public void addUser(String userName, boolean superUser) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public List<String> getUsers() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public boolean isSuperUser(String userName) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public boolean hasUser(String user) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 }

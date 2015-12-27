@@ -11,6 +11,8 @@ import hu.droidium.telemetering.interfaces.UserStoreInterface;
 import hu.droidium.telemetering.interfaces.communication.Channel;
 import hu.droidium.telemetering.interfaces.communication.MessageListener;
 
+// TODO add file logging
+
 public class LovasRaspberryModularSingleNode implements MessageListener {
 	
 	private LayoutStoreInterface layoutStore;
@@ -81,23 +83,23 @@ public class LovasRaspberryModularSingleNode implements MessageListener {
 		if (userStore.hasUser(user)) {
 			if (userStore.isSuperUser(user)){
 				String commandResponse = processMessage(message);
-				if (commandResponse == null) {
-					String response = "No language interface";
-					if (languageInterface != null) {
-						response = languageInterface.getResponse(message, System.currentTimeMillis());
-					}
-					System.out.println(response);
-					if (channel != null) {
-						channel.sendMessage(user, response);
-					} else {
-						System.out.println("No channel");
-					}
-				} else {
+				if (commandResponse != null) {
 					channel.sendMessage(user, commandResponse);
+					return;
 				}
 			}
+			String response = "No language interface";
+			if (languageInterface != null) {
+				response = languageInterface.getResponse(message, System.currentTimeMillis());
+			}
+			System.out.println("Response " + response);
+			if (channel != null) {
+				channel.sendMessage(user, response);
+			} else {
+				System.out.println("No channel");
+			}
 		} else {
-			System.out.println("Invalid user name");
+			System.out.println("Invalid user name " + user);
 			if (channel != null) {
 				channel.sendMessage(user, "User " + user + " not authorized");
 			}
@@ -110,7 +112,6 @@ public class LovasRaspberryModularSingleNode implements MessageListener {
 	 * @return
 	 */
 	private String processMessage(String message) {
-		// TODO Process command message
 		message = message.toLowerCase();
 		if (message.endsWith(".") || message.endsWith("!")) {
 			message = message.substring(0, message.length() - 1);
@@ -124,9 +125,9 @@ public class LovasRaspberryModularSingleNode implements MessageListener {
 		}
 		if (add != null && parts.length == 3) {
 			if (add) {
-				boolean result = userStore.addUser(parts[3], false);
+				boolean result = userStore.addUser(parts[2], false);
 				if (result) {
-					return "User " + parts[3] + " added.";
+					return "User " + parts[2] + " added.";
 				} else {
 					return "An unexpected error occured, couldn't add user.";
 				}
@@ -137,7 +138,7 @@ public class LovasRaspberryModularSingleNode implements MessageListener {
 			if (add == null) {
 				return null;
 			} else {
-				return "Invalid command length, requires a single parameter";
+				return "Invalid command length, requires a single parameter, received " + parts.length;
 			}
 		}
 	}

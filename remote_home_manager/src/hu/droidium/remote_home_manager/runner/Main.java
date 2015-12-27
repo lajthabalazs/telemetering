@@ -1,6 +1,6 @@
 package hu.droidium.remote_home_manager.runner;
 
-import hu.droidium.remote_home_manager.HungarianLanguageModule;
+import hu.droidium.remote_home_manager.EasyLanguageInterface;
 import hu.droidium.remote_home_manager.RaspberryRelayController;
 import hu.droidium.remote_home_manager.database.MySQLDataStore;
 import hu.droidium.telemetering.interfaces.DatastoreBase;
@@ -54,11 +54,11 @@ public class Main {
 						datastore,
 						new RaspberryRelayController());
 				node.run();		
-				LanguageInterface languageInterface = new HungarianLanguageModule(node);
+				LanguageInterface languageInterface = new EasyLanguageInterface(node);
 				node.registerListener(languageInterface);
 				while (true) {
 					try {
-						Channel commClient = new GoogleTalkClient(gtalkUserName, gtalkPassName);
+						Channel commClient = new GoogleTalkClient(gtalkUserName, gtalkPassName, false);
 						commClient.registerMessageListener(node);
 						node.setLanguageInterface(commClient);
 						break;

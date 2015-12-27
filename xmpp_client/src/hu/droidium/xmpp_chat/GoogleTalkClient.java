@@ -29,14 +29,14 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 	private XMPPTCPConnection connection;
 	private ChatManager chatManager;
 	
-	public GoogleTalkClient(String userName, String password) throws SmackException, IOException, XMPPException {
+	public GoogleTalkClient(String userName, String password, boolean debug) throws SmackException, IOException, XMPPException {
 		SmackConfiguration.DEBUG = true;
 		XMPPTCPConnectionConfiguration connConfig = XMPPTCPConnectionConfiguration.builder()
 				  .setUsernameAndPassword(userName, password)
 				  .setServiceName("google.com")
 				  .setHost("talk.google.com")
 				  .setPort(5222)
-				  .setDebuggerEnabled(true)
+				  .setDebuggerEnabled(debug)
 				  .build();
 		connection = new XMPPTCPConnection(connConfig);
 		System.out.println(SASLAuthentication.getRegisterdSASLMechanisms().keySet());
@@ -54,8 +54,6 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 		Chat chat = chats.get(user);
 		if (chat == null) {
 			chat = chatManager.createChat("lajthabalazs@gmail.com", this);
-			chat.addMessageListener(this);
-			chats.put(user, chat);
 		}
 		try {
 			chat.sendMessage(message);
@@ -90,6 +88,7 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 	public void processMessage(Chat chat, Message message) {
 		String user = message.getFrom().split("/")[0];
 		String text = message.getBody();
+		chats.put(user, chat);
 		if (text != null) {
 			for (MessageListener listener : listeners) {
 				listener.messageReceived(user, text);
@@ -98,7 +97,7 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 	}
 
 	public static void main(String args[]) throws SmackException, IOException, XMPPException {
-		final GoogleTalkClient talkClient = new GoogleTalkClient(args[0], args[1]);
+		final GoogleTalkClient talkClient = new GoogleTalkClient(args[0], args[1], true);
 		MessageListener listener = new MessageListener() {
 			
 			@Override

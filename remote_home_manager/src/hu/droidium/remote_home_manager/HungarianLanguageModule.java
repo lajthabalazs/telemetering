@@ -100,12 +100,12 @@ public class HungarianLanguageModule implements LanguageInterface {
 		if (message.startsWith("kapcsold be")) {
 			Relay relay = getRelay(message);
 			relayController.setState(relay, RelayState.ON);
-			return "Bal konnektor " + RelayState.ON.toResultStateString() + ".";
+			return relay.getName() + " konnektor " + RelayState.ON.toResultStateString() + ".";
 			
 		} else if (message.startsWith("kapcsold ki")) {
 			Relay relay = getRelay(message);
 			relayController.setState(relay, RelayState.OFF);
-			return "Jobb konnektor " + RelayState.OFF.toResultStateString() + ".";
+			return relay.getName() +" konnektor " + RelayState.OFF.toResultStateString() + ".";
 		}
 		
 		// Matching rule

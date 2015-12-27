@@ -17,7 +17,11 @@ import java.util.List;
 public class MySQLDataStore extends DatastoreBase {
 	
 	// TODO implement user functionality
-	
+	private static final String USER_TABLE = "user";
+
+	private static final String USER_NAME = "user_name";
+	private static final String IS_SUPER_USER = "is_super_user";
+
 	private static final String MEASUREMENT_TABLE = "measurement";
 
 	private static final String TIME = "timestamp";
@@ -36,6 +40,12 @@ public class MySQLDataStore extends DatastoreBase {
 	private static final String AUTO_MODE_ENABLED = "auto_mode_enabled";
 	private static final String MANUAL_HEATING_TIL = "manual_heating_til";
 
+
+	private static final String CREATE_USER = "CREATE TABLE IF NOT EXISTS " + USER_TABLE + " " +
+			"(" +
+			USER_NAME + " TEXT NOT NULL," + 
+			IS_SUPER_USER + " BOOL NOT NULL" + 
+			")";
 
 	private static final String CREATE_MEASUREMENT = "CREATE TABLE IF NOT EXISTS " + MEASUREMENT_TABLE + " " +
 			"(" +
@@ -56,8 +66,8 @@ public class MySQLDataStore extends DatastoreBase {
 			"(" +
 			TIME + " BIGINT NOT NULL," +
 			LOCATION + " TEXT NOT NULL," + 
-			TARGET_TEMP + " INT NOT NULL" +
-			TARGET_THRESHOLD + " INT NOT NULL" +
+			TARGET_TEMP + " INT NOT NULL," +
+			TARGET_THRESHOLD + " INT NOT NULL," +
 			AUTO_MODE_ENABLED + " BOOL NOT NULL" +
 			")";
 	
@@ -75,18 +85,25 @@ public class MySQLDataStore extends DatastoreBase {
 		
 		
 		conn = DriverManager.getConnection(serverURL, user, password);
-		// Create database if it doesn't exist
-		Statement stmt = conn.createStatement();
-		String sql = "CREATE DATABASE If NOT EXISTS " + databaseName;
-		stmt.executeUpdate(sql);
 		// Create tables
-		stmt.close();
-		conn.setCatalog(databaseName);
-		stmt = conn.createStatement();
-		stmt.executeUpdate(CREATE_MEASUREMENT);
-		stmt.executeUpdate(CREATE_THRESHOLDS);
-		stmt.executeUpdate(CREATE_HEATER_PROGRAM);
-		stmt.close();
+		try {
+			Statement stmt = conn.createStatement();
+			String sql = "CREATE DATABASE If NOT EXISTS " + databaseName;
+			stmt.executeUpdate(sql);
+			// Create tables
+			stmt.close();
+			conn.setCatalog(databaseName);
+			stmt = conn.createStatement();
+			stmt.executeUpdate(CREATE_USER);
+			stmt.executeUpdate(CREATE_MEASUREMENT);
+			stmt.executeUpdate(CREATE_THRESHOLDS);
+			stmt.executeUpdate(CREATE_HEATER_PROGRAM);
+			stmt.close();
+			System.out.println("Initialized database.");
+		} catch (SQLException e) {
+			System.out.println("Couldn't nitialize database.");
+			throw new SQLException("Couldn't initialize database: " + e.getMessage(), e);
+		}
 	}
 
 	@Override
@@ -341,21 +358,93 @@ public class MySQLDataStore extends DatastoreBase {
 	}
 
 	@Override
-	public void addUser(String userName, boolean superUser) {
+	public boolean addUser(String userName, boolean superUser) {
+		if (hasUser(userName)) {
+			return false;
+		}
+		String sql = "INSERT INTO " + USER_TABLE +
+				"(" +
+				USER_NAME + ", " +
+				IS_SUPER_USER + 
+				") VALUES (" +
+				"'" + userName + "'," +
+				superUser + 
+				");";
+		try {
+			Statement stmt = conn.createStatement();
+			int affectedRows = stmt.executeUpdate(sql);
+			stmt.close();
+			return affectedRows > 0;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
 	}
 
 	@Override
 	public List<String> getUsers() {
+		try {
+			Statement stmt = conn.createStatement();
+			String sql = "SELECT * FROM " + USER_TABLE
+					+ " ORDER BY " + USER_NAME + ";";
+			ResultSet result = stmt.executeQuery(sql);
+			List<String> ret = new LinkedList<String>();
+			for (result.beforeFirst(); result.next();) {
+				ret.add( result.getString(USER_NAME));
+			}
+			result.close();
+			stmt.close();
+			return ret;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 
 	@Override
 	public boolean isSuperUser(String userName) {
+		try {
+			Statement stmt = conn.createStatement();
+			String sql = "SELECT * FROM " + USER_TABLE + " WHERE " 
+					+ USER_NAME + " = '" + userName + "';";
+			ResultSet result = stmt.executeQuery(sql);
+			boolean ret = false;
+			for (result.beforeFirst(); result.next();) {
+				ret = result.getBoolean(IS_SUPER_USER);
+				break;
+			}
+			result.close();
+			stmt.close();
+			return ret;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		return false;
 	}
 
 	@Override
-	public boolean hasUser(String user) {
+	public boolean hasUser(String userName) {
+		try {
+			Statement stmt = conn.createStatement();
+			String sql = "SELECT * FROM " + USER_TABLE + " WHERE " 
+					+ USER_NAME + " = '" + userName + "';";
+			ResultSet result = stmt.executeQuery(sql);
+			boolean ret = false;
+			for (result.beforeFirst(); result.next();) {
+				ret = true;
+				break;
+			}
+			result.close();
+			stmt.close();
+			return ret;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		return false;
+	}
+
+	@Override
+	public String removeUser(String userName) {
+		return "Couldn't remove user, feature not implemented.";
 	}
 }

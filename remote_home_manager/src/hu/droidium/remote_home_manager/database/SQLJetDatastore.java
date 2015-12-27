@@ -310,8 +310,8 @@ public class SQLJetDatastore extends DatastoreBase {
 	}
 
 	@Override
-	public void addUser(String userName, boolean superUser) {
-		
+	public boolean addUser(String userName, boolean superUser) {
+		return false;
 	}
 
 	@Override
@@ -322,5 +322,11 @@ public class SQLJetDatastore extends DatastoreBase {
 	@Override
 	public boolean hasUser(String user) {
 		return false;
+	}
+
+	@Override
+	public String removeUser(String string) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

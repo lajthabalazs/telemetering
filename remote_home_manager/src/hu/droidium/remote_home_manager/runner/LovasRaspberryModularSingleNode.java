@@ -80,8 +80,8 @@ public class LovasRaspberryModularSingleNode implements MessageListener {
 	public void messageReceived(String user, String message) {
 		if (userStore.hasUser(user)) {
 			if (userStore.isSuperUser(user)){
-				boolean commandMessage = processMessage(message);
-				if (!commandMessage) {
+				String commandResponse = processMessage(message);
+				if (commandResponse == null) {
 					String response = "No language interface";
 					if (languageInterface != null) {
 						response = languageInterface.getResponse(message, System.currentTimeMillis());
@@ -92,12 +92,14 @@ public class LovasRaspberryModularSingleNode implements MessageListener {
 					} else {
 						System.out.println("No channel");
 					}
+				} else {
+					channel.sendMessage(user, commandResponse);
 				}
 			}
 		} else {
 			System.out.println("Invalid user name");
 			if (channel != null) {
-				channel.sendMessage(user, "User not authorized");
+				channel.sendMessage(user, "User " + user + " not authorized");
 			}
 		}
 	}
@@ -107,9 +109,37 @@ public class LovasRaspberryModularSingleNode implements MessageListener {
 	 * @param message
 	 * @return
 	 */
-	private boolean processMessage(String message) {
+	private String processMessage(String message) {
 		// TODO Process command message
-		return false;
+		message = message.toLowerCase();
+		if (message.endsWith(".") || message.endsWith("!")) {
+			message = message.substring(0, message.length() - 1);
+		}
+		Boolean add = null;
+		String[] parts = message.split(" ");
+		if (message.startsWith("add user ")) {
+			add = true;
+		} else if (message.startsWith("remove user ") || message.startsWith("del user ") || message.startsWith("delete user ")) {
+			add = false;
+		}
+		if (add != null && parts.length == 3) {
+			if (add) {
+				boolean result = userStore.addUser(parts[3], false);
+				if (result) {
+					return "User " + parts[3] + " added.";
+				} else {
+					return "An unexpected error occured, couldn't add user.";
+				}
+			} else {
+				return userStore.removeUser(parts[3]);
+			}
+		} else {
+			if (add == null) {
+				return null;
+			} else {
+				return "Invalid command length, requires a single parameter";
+			}
+		}
 	}
 
 	public void registerListener(LanguageInterface languageInterface) {

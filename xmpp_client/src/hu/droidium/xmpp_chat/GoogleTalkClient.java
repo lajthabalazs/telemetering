@@ -11,10 +11,8 @@ import java.util.Set;
 import org.jivesoftware.smack.SASLAuthentication;
 import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.SmackException;
-import org.jivesoftware.smack.SmackException.NoResponseException;
 import org.jivesoftware.smack.SmackException.NotConnectedException;
 import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.XMPPException.XMPPErrorException;
 import org.jivesoftware.smack.chat.Chat;
 import org.jivesoftware.smack.chat.ChatManager;
 import org.jivesoftware.smack.chat.ChatManagerListener;
@@ -23,8 +21,6 @@ import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
-import org.jivesoftware.smackx.vcardtemp.VCardManager;
-import org.jivesoftware.smackx.vcardtemp.packet.VCard;
 
 public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessageListener {
 	
@@ -32,7 +28,6 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 	private HashMap<String, Chat> chats = new HashMap<String, Chat>();
 	private XMPPTCPConnection connection;
 	private ChatManager chatManager;
-	private VCardManager cardManager;
 	
 	public GoogleTalkClient(String userName, String password) throws SmackException, IOException, XMPPException {
 		SmackConfiguration.DEBUG = true;
@@ -52,7 +47,6 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 		connection.sendStanza(presence);
 		chatManager = ChatManager.getInstanceFor(connection);		
 		chatManager.addChatListener(this);
-		cardManager = VCardManager.getInstanceFor(connection);
 	}
 	
 	@Override
@@ -94,18 +88,9 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 
 	@Override
 	public void processMessage(Chat chat, Message message) {
-		String user = message.getFrom();
+		String user = message.getFrom().split("/")[0];
 		String text = message.getBody();
-		try {
-			VCard c = cardManager.loadVCard(user);
-			System.out.println(c.getEmailHome() + " " + c.getEmailWork());
-			System.out.println(c);
-		} catch (NoResponseException | XMPPErrorException
-				| NotConnectedException e) {
-			e.printStackTrace();
-		}
 		if (text != null) {
-			System.err.println(user + ">" + text);
 			for (MessageListener listener : listeners) {
 				listener.messageReceived(user, text);
 			}
@@ -113,7 +98,24 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 	}
 
 	public static void main(String args[]) throws SmackException, IOException, XMPPException {
-		new GoogleTalkClient(args[0], args[1]);
+		final GoogleTalkClient talkClient = new GoogleTalkClient(args[0], args[1]);
+		MessageListener listener = new MessageListener() {
+			
+			@Override
+			public void messageReceived(String user, String message) {
+				System.out.println(user + " > " + message);
+				talkClient.sendMessage(user, reverse(message));
+			}
+
+			private String reverse(String message) {
+				String s = "";
+				for(int i = 0; i < message.length(); i++) {
+					s = message.charAt(i) + s;
+				}
+				return s;
+			}
+		};
+		talkClient.registerMessageListener(listener);
 		new Thread(new Runnable() {
 			
 			@Override

@@ -74,7 +74,7 @@ public class HungarianLanguageModule implements LanguageInterface {
 	private ProgramStoreInterface programStore;
 	private RelayController relayController;
 	
-	public HungarianLanguageModule( LayoutStoreInterface layoutStore, MeasurementStoreInterface sensorDataStore, ProgramStoreInterface programStore, RaspberryRelayController relayController) {
+	public HungarianLanguageModule( LayoutStoreInterface layoutStore, MeasurementStoreInterface sensorDataStore, ProgramStoreInterface programStore, RelayController relayController) {
 		this.sensorDataStore = sensorDataStore;
 		this.layoutStore = layoutStore;
 		this.programStore = programStore;

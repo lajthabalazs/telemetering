@@ -108,21 +108,9 @@ public class MySQLDataStore extends DatastoreBase {
 
 	@Override
 	public List<String> getLocations() {
-		try {
-			Statement stmt = conn.createStatement();
-			String sql = "SELECT DISTINCT location from " + MEASUREMENT_TABLE + ";";
-			ResultSet result = stmt.executeQuery(sql);
-			List<String> ret = new ArrayList<String>();
-			for (result.beforeFirst(); result.next();) {
-				ret.add(result.getString(LOCATION));
-			}
-			result.close();
-			stmt.close();
-			return ret;
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return null;
+		ArrayList<String> locations = new ArrayList<String>();
+		locations.add("nappali");
+		return locations;
 	}
 
 	@Override
@@ -240,14 +228,6 @@ public class MySQLDataStore extends DatastoreBase {
 		return null;
 	}
 	
-	public static void main(String[] args) {
-		try {
-			new MySQLDataStore("jdbc:mysql://localhost:3306", "telemetering" , "root", "cicamica");
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
-
 	@Override
 	public List<SensorType> getAvailableSensorTypes(String location) {
 		// For now, only sensor type available is temperature
@@ -360,6 +340,7 @@ public class MySQLDataStore extends DatastoreBase {
 	@Override
 	public boolean addUser(String userName, boolean superUser) {
 		if (hasUser(userName) && !superUser) {
+			System.out.println("User already in database.");
 			return false;
 		}
 		String sql = "INSERT INTO " + USER_TABLE +
@@ -371,9 +352,11 @@ public class MySQLDataStore extends DatastoreBase {
 				superUser + ") ON DUPLICATE KEY UPDATE " + 
 				IS_SUPER_USER + "=" + superUser + ";";
 		try {
+			System.out.println("Adding user " + userName);
 			Statement stmt = conn.createStatement();
 			int affectedRows = stmt.executeUpdate(sql);
 			stmt.close();
+			System.out.println("User added " + affectedRows);
 			return affectedRows > 0;
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -446,5 +429,14 @@ public class MySQLDataStore extends DatastoreBase {
 	@Override
 	public String removeUser(String userName) {
 		return "Couldn't remove user, feature not implemented.";
+	}
+
+	public static void main(String[] args) {
+		try {
+			MySQLDataStore store = new MySQLDataStore("jdbc:mysql://localhost:3306", "telemetering" , "root", "cicamica");
+			store.addUser("36nn4vk8doxtv3hkfvcnniempu@public.talk.google.com", false);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 }

@@ -1,75 +1,83 @@
 package hu.droidium.remote_home_manager.runner;
 
-import hu.droidium.remote_home_manager.GUIClient;
 import hu.droidium.remote_home_manager.HungarianLanguageModule;
 import hu.droidium.remote_home_manager.RaspberryRelayController;
-import hu.droidium.remote_home_manager.database.SQLJetDatastore;
+import hu.droidium.remote_home_manager.database.MySQLDataStore;
 import hu.droidium.telemetering.interfaces.DatastoreBase;
 import hu.droidium.telemetering.interfaces.LanguageInterface;
 import hu.droidium.telemetering.interfaces.communication.Channel;
 import hu.droidium.xmpp_chat.GoogleTalkClient;
 
+import java.io.File;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class Main {
 	public static void main(String[] args) {
-		String databaseFile;
-		String userName;
-		String password;
-		String superUserId;
-		boolean demoMode;
-		boolean ui;
-		System.out.println("Received " + args.length + " parameters.");
-		if (args.length == 6) {
-			System.out.println("Extracting parameters...");
-			databaseFile = args[0];
-			userName = args[1];
-			password = args[2];
-			superUserId = args[3];
-			demoMode = Boolean.parseBoolean(args[4]);
-			ui = false;
-		} else {
-			System.out.println("Using built in parameters...");
-			databaseFile = "temp.sqlite";
-			userName = "lovas_telemetering_client";
-			password = "hello world";
-			superUserId = "superUserId";
-			demoMode = true;
-			ui = true;
-		}
-		System.out.println("Database " + databaseFile);
-		System.out.println("User " + userName);
-		System.out.println("Password " + password);
-		System.out.println("Demo mode " + demoMode);
-
-		DatastoreBase datastore = new SQLJetDatastore(databaseFile);
-		datastore.addUser(superUserId, true);
-		
-		LovasRaspberryModularSingleNode node = new LovasRaspberryModularSingleNode(demoMode,
-				datastore,
-				datastore,
-				datastore,
-				datastore,
-				new RaspberryRelayController());
-		node.run();		
-		LanguageInterface languageInterface = new HungarianLanguageModule(node);
-		node.registerListener(languageInterface);
-		while (true) {
-			try {
-				Channel commClient = new GoogleTalkClient(userName, password);
-				commClient.registerMessageListener(node);
-				node.setLanguageInterface(commClient);
-				break;
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.out.println("Error " + e);
+		try {
+			File configFile;
+			if (args.length == 0) {
+				configFile = new File("config.json");
+				System.out.println("No config file, trying default " + configFile.getAbsolutePath());
+			} else {
+				configFile = new File(args[0]);
+				System.out.println("Received config file " + configFile.getAbsolutePath());
 			}
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+	
+			if (configFile.exists()) {
+				JsonFactory f = new JsonFactory();
+				ObjectMapper mapper = new ObjectMapper();
+				JsonParser parser;
+				parser = f.createParser(configFile);
+				JsonNode root = mapper.readTree(parser);
+				JsonNode database = root.get("database");
+				String url = database.get("url").asText();
+				String databaseName = database.get("schema").asText();
+				String dbUser = database.get("user").asText();
+				String dbPassword = database.get("password").asText();
+				String superUser = root.get("superuser").asText();
+				
+				JsonNode gtalk = root.get("gtalk");
+				String gtalkUserName = gtalk.get("user").asText();
+				String gtalkPassName = gtalk.get("password").asText();
+	
+				DatastoreBase datastore = new MySQLDataStore(url, databaseName, dbUser, dbPassword);
+				datastore.addUser(superUser, true);
+				
+				LovasRaspberryModularSingleNode node = new LovasRaspberryModularSingleNode(false,
+						datastore,
+						datastore,
+						datastore,
+						datastore,
+						new RaspberryRelayController());
+				node.run();		
+				LanguageInterface languageInterface = new HungarianLanguageModule(node);
+				node.registerListener(languageInterface);
+				while (true) {
+					try {
+						Channel commClient = new GoogleTalkClient(gtalkUserName, gtalkPassName);
+						commClient.registerMessageListener(node);
+						node.setLanguageInterface(commClient);
+						break;
+					} catch (Exception e) {
+						e.printStackTrace();
+						System.out.println("Error " + e);
+					}
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			} else {
+				System.out.println("No config file, and default config not available at " + configFile.getAbsolutePath());
+				System.exit(-1);
 			}
-		}
-		if (ui) {
-			new GUIClient(languageInterface);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 }

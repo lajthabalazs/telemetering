@@ -43,9 +43,9 @@ public class MySQLDataStore extends DatastoreBase {
 
 	private static final String CREATE_USER = "CREATE TABLE IF NOT EXISTS " + USER_TABLE + " " +
 			"(" +
-			USER_NAME + " TEXT NOT NULL," + 
+			USER_NAME + " VARCHAR(255) NOT NULL," + 
 			IS_SUPER_USER + " BOOL NOT NULL" + 
-			")";
+			", PRIMARY KEY (" + USER_NAME + ") )";
 
 	private static final String CREATE_MEASUREMENT = "CREATE TABLE IF NOT EXISTS " + MEASUREMENT_TABLE + " " +
 			"(" +
@@ -359,7 +359,7 @@ public class MySQLDataStore extends DatastoreBase {
 
 	@Override
 	public boolean addUser(String userName, boolean superUser) {
-		if (hasUser(userName)) {
+		if (hasUser(userName) && !superUser) {
 			return false;
 		}
 		String sql = "INSERT INTO " + USER_TABLE +
@@ -368,8 +368,8 @@ public class MySQLDataStore extends DatastoreBase {
 				IS_SUPER_USER + 
 				") VALUES (" +
 				"'" + userName + "'," +
-				superUser + 
-				");";
+				superUser + ") ON DUPLICATE KEY UPDATE " + 
+				IS_SUPER_USER + "=" + superUser + ";";
 		try {
 			Statement stmt = conn.createStatement();
 			int affectedRows = stmt.executeUpdate(sql);

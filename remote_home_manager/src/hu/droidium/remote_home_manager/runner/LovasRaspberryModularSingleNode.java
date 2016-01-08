@@ -10,6 +10,7 @@ import hu.droidium.telemetering.interfaces.SensorType;
 import hu.droidium.telemetering.interfaces.UserStoreInterface;
 import hu.droidium.telemetering.interfaces.communication.Channel;
 import hu.droidium.telemetering.interfaces.communication.MessageListener;
+import hu.droidium.xmpp_chat.PongClient;
 
 // TODO add file logging
 
@@ -79,7 +80,7 @@ public class LovasRaspberryModularSingleNode implements MessageListener {
 	}
 
 	@Override
-	public void messageReceived(String user, String message) {
+	public void messageReceived(Channel channel, String user, String message) {
 		if (userStore.hasUser(user)) {
 			if (userStore.isSuperUser(user)){
 				String commandResponse = processMessage(message);
@@ -147,8 +148,9 @@ public class LovasRaspberryModularSingleNode implements MessageListener {
 		this.languageInterface = languageInterface;
 	}
 
-	public void setLanguageInterface(Channel commClient) {
+	public void setChannel(Channel commClient) {
 		this.channel  = commClient;
+		new PongClient(channel);
 	}	
 
 }

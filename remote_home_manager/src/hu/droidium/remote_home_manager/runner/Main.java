@@ -60,7 +60,7 @@ public class Main {
 					try {
 						Channel commClient = new GoogleTalkClient(gtalkUserName, gtalkPassName, false);
 						commClient.registerMessageListener(node);
-						node.setLanguageInterface(commClient);
+						node.setChannel(commClient);
 						break;
 					} catch (Exception e) {
 						e.printStackTrace();

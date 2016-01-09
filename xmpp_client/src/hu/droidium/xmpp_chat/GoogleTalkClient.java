@@ -108,8 +108,10 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 		}
 		try {
 			chat.sendMessage(message);
+			System.out.println("Message sent.");
 			return true;
 		} catch (NotConnectedException e) {
+			System.out.println("Error sending message.");
 			e.printStackTrace();
 			return false;
 		}
@@ -137,14 +139,28 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 
 	@Override
 	public void processMessage(Chat chat, Message message) {
-		String user = message.getFrom().split("/")[0];
-		String text = message.getBody();
-		chats.put(user, chat);
-		if (text != null) {
-			System.out.println("Message received " + user + " : " + text);
-			for (MessageListener listener : listeners) {
-				listener.messageReceived(this, user, text);
+		try {
+			String user = message.getFrom().split("/")[0];
+			String text = message.getBody();
+			chats.put(user, chat);
+			if (text != null) {
+				System.out.println("Processing message from " + user + " : " + text);
+				for (MessageListener listener : listeners) {
+					try {
+						listener.messageReceived(this, user, text);
+					} catch (Exception e) {
+						if (listener == null) {
+							System.out.println("Error processing mesage, listener null.");
+						} else {
+							System.out.println("Error processing mesage " + listener.getClass().getName());
+						}
+						e.printStackTrace();
+					}
+				}
 			}
+		} catch (Exception e) {
+			System.out.println("Fatal error processing message " + e.getMessage());
+			e.printStackTrace();
 		}
 	}
 

@@ -81,6 +81,7 @@ public class LovasRaspberryModularSingleNode implements MessageListener {
 
 	@Override
 	public void messageReceived(Channel channel, String user, String message) {
+		System.out.println("Single node received messsage " + message);
 		if (userStore.hasUser(user)) {
 			if (userStore.isSuperUser(user)){
 				String commandResponse = processMessage(message);

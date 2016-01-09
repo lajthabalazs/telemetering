@@ -1,5 +1,10 @@
 package hu.droidium.xmpp_chat;
 
+import java.io.IOException;
+
+import org.jivesoftware.smack.SmackException;
+import org.jivesoftware.smack.XMPPException;
+
 import hu.droidium.telemetering.interfaces.communication.Channel;
 import hu.droidium.telemetering.interfaces.communication.MessageListener;
 
@@ -53,7 +58,7 @@ public class PongServer implements MessageListener{
 		}
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws SmackException, IOException, XMPPException {
 		if (args.length != 2) {
 			System.out.println("Pong server requires a username and a password.");
 		} else {

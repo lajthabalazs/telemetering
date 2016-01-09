@@ -8,12 +8,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.jivesoftware.smack.ConnectionListener;
-import org.jivesoftware.smack.SASLAuthentication;
 import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.SmackException.NotConnectedException;
-import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.chat.Chat;
 import org.jivesoftware.smack.chat.ChatManager;
@@ -24,8 +21,11 @@ import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 
-public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessageListener, ConnectionListener {
-		
+public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessageListener {
+
+	static {
+		SmackConfiguration.DEBUG = true;
+	}
 	private Set<MessageListener> listeners = new HashSet<MessageListener>();
 	private HashMap<String, Chat> chats = new HashMap<String, Chat>();
 	private XMPPTCPConnection connection;
@@ -34,7 +34,7 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 	private String password;
 	private boolean debug;
 
-	public GoogleTalkClient(String userName, String password, boolean debug) {
+	public GoogleTalkClient(String userName, String password, boolean debug) throws SmackException, IOException, XMPPException {
 		this.userName = userName;
 		this.password = password;
 		this.debug = debug;
@@ -44,7 +44,15 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 	@Override
 	public void reconnect() {
 		disconnect();
-		connect();
+		try {
+			connect();
+		} catch (SmackException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (XMPPException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private synchronized void disconnect() {
@@ -59,11 +67,10 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 		connection = null;
 	}
 	
-	private synchronized boolean connect() {
+	private synchronized void connect() throws SmackException, IOException, XMPPException {
 		if (connection != null) {
-			return false;
+			return;
 		}
-		SmackConfiguration.DEBUG = debug;
 		XMPPTCPConnectionConfiguration connConfig = XMPPTCPConnectionConfiguration.builder()
 				  .setUsernameAndPassword(userName, password)
 				  .setServiceName("google.com")
@@ -72,21 +79,16 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 				  .setDebuggerEnabled(debug)
 				  .build();
 		connection = new XMPPTCPConnection(connConfig);
-		connection.addConnectionListener(this);
-		System.out.println(SASLAuthentication.getRegisterdSASLMechanisms().keySet());
-		try {
-			connection.connect();
-			connection.login();
-			System.out.println("Logged in as " + connection.getUser());
-			Presence presence = new Presence(Presence.Type.available);
-			connection.sendStanza(presence);
-			chatManager = ChatManager.getInstanceFor(connection);		
-			chatManager.addChatListener(this);
-			return true;
-		} catch (SmackException | IOException | XMPPException e) {
-			e.printStackTrace();
-			return false;
-		}
+		System.out.println("Connecting...");
+		connection.connect();
+		System.out.println("Connected.");
+		System.out.println("Logging in...");
+		connection.login();
+		System.out.println("Logged in as " + connection.getUser());
+		Presence presence = new Presence(Presence.Type.available);
+		connection.sendStanza(presence);
+		chatManager = ChatManager.getInstanceFor(connection);		
+		chatManager.addChatListener(this);
 	}
 	
 	@Override
@@ -144,41 +146,6 @@ public class GoogleTalkClient implements Channel, ChatManagerListener, ChatMessa
 				listener.messageReceived(this, user, text);
 			}
 		}
-	}
-
-	@Override
-	public void authenticated(XMPPConnection arg0, boolean arg1) {
-		System.out.println("XMPP connection authenticated " + arg1);
-	}
-
-	@Override
-	public void connected(XMPPConnection arg0) {
-		System.out.println("XMPP connection connected.");
-	}
-
-	@Override
-	public void connectionClosed() {
-		System.out.println("XMPP connection closed.");
-	}
-
-	@Override
-	public void connectionClosedOnError(Exception arg0) {
-		System.out.println("XMPP connection closed with error " + arg0.getMessage());
-	}
-
-	@Override
-	public void reconnectingIn(int arg0) {
-		System.out.println("XMPP reconnecting in " + arg0);
-	}
-
-	@Override
-	public void reconnectionFailed(Exception arg0) {
-		System.out.println("XMPP reconnection failed.");
-	}
-
-	@Override
-	public void reconnectionSuccessful() {
-		System.out.println("XMPP reconnection successful.");
 	}
 
 	public static void main(String args[]) throws SmackException, IOException, XMPPException {
